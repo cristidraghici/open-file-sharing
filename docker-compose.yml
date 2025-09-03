@@ -1,0 +1,20 @@
+services:
+  frontend:
+    build:
+      context: ./apps/ui
+      target: development
+    volumes:
+      - ./apps/ui:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+
+  backend:
+    build:
+      context: ./apps/service
+    volumes:
+      - ./apps/service/src:/var/www/src
+      - ./apps/service/public:/var/www/html
+      - /var/www/src/vendor
+    ports:
+      - "8080:80"

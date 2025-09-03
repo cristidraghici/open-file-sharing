@@ -2,13 +2,22 @@
   "name": "@open-file-sharing/ui",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview"
+  },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "axios": "^1.5.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@types/node": "^20.12.7",
     "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0"
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.4",
+    "typescript": "^5.0.0",
+    "vite": "^4.4.9"
   }
 }
