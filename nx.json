@@ -1,0 +1,15 @@
+{
+  "npmScope": "open-file-sharing",
+  "affected": {
+    "defaultBase": "master"
+  },
+  "installation": {
+    "version": "21.4.1"
+  },
+  "projects": {
+    "ui": "apps/ui",
+    "service": "apps/service",
+    "libs": "libs",
+    "tools": "tools"
+  }
+}

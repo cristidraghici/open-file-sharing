@@ -1,1 +1,12 @@
-.vscode/
+build/
+dist/
+
+.nx/cache
+.nx/installation
+.nx/workspace-data
+
+.env
+!.env.example
+
+node_modules/
+vendor/
