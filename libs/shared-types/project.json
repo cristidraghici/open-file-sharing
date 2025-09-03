@@ -1,12 +1,20 @@
 {
   "name": "shared-types",
-  "sourceRoot": "libs/shared-types/src",
+  "sourceRoot": "libs/shared-types",
   "projectType": "library",
   "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run generate",
+        "cwd": "libs/shared-types"
+      }
+    },
     "install": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm install",
+        "commands": ["npm install", "composer install"],
+        "parallel": false,
         "cwd": "libs/shared-types"
       }
     }

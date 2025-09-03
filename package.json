@@ -2,7 +2,8 @@
   "name": "open-file-sharing",
   "private": true,
   "scripts": {
-    "install:all": "nx run-many --target=install --all"
+    "install:all": "nx run-many --target=install --all",
+    "generate:contracts": "nx run shared-types:generate"
   },
   "devDependencies": {
     "nx": "21.4.1"

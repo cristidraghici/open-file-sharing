@@ -1,0 +1,22 @@
+{
+  "name": "open-file-sharing/shared-types",
+  "description": "Shared types and DTOs for Open File Sharing",
+  "type": "library",
+  "require": {
+    "php": ">=8.1"
+  },
+  "require-dev": {
+    "jane-php/open-api-runtime": "^7.5",
+    "jane-php/open-api-3": "^7.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenFileSharing\\Dto\\": "generated/php/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}
