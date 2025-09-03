@@ -1,0 +1,14 @@
+{
+  "name": "shared-types",
+  "sourceRoot": "libs/shared-types/src",
+  "projectType": "library",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm install",
+        "cwd": "libs/shared-types"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "service",
+  "sourceRoot": "apps/service/src",
+  "projectType": "application",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "composer install",
+        "cwd": "apps/service"
+      }
+    }
+  }
+}

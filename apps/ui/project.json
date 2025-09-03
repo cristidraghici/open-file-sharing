@@ -1,0 +1,14 @@
+{
+  "name": "ui",
+  "sourceRoot": "apps/ui/src",
+  "projectType": "application",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm install",
+        "cwd": "apps/ui"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "open-file-sharing",
+  "private": true,
+  "scripts": {
+    "install:all": "nx run-many --target=install --all"
+  },
+  "devDependencies": {
+    "nx": "21.4.1"
+  }
+}
