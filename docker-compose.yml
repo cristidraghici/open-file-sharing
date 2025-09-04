@@ -13,8 +13,9 @@ services:
     build:
       context: ./apps/service
     volumes:
-      - ./apps/service/src:/var/www/src
+      - ./apps/service:/app
       - ./apps/service/public:/var/www/html
-      - /var/www/src/vendor
+      - ./.data/service-logs:/var/log/apache2
+      - /app/vendor
     ports:
       - "8080:80"

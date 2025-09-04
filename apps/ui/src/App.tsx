@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 
 interface HelloResponse {
-  message: string;
+  data: string;
 }
 
 export default function App() {
@@ -16,7 +16,7 @@ export default function App() {
         const response = await axios.get<HelloResponse>(
           `${apiUrl}/hello/world`
         );
-        setMessage(response.data.message);
+        setMessage(response.data.data);
       } catch (err) {
         setError(
           "Error fetching message: " +

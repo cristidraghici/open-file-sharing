@@ -1,15 +1,3 @@
-# Application
-.env
-!.env.example
-
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# SlimPHP
-vendor/
-
 # Compiled output
 build/
 dist/
@@ -19,6 +7,9 @@ tmp/
 .nx/cache
 .nx/installation
 .nx/workspace-data
+
+node_modules/
+vendor/
 
 # IDEs and editors
 .idea/

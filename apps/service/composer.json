@@ -3,6 +3,10 @@
   "type": "project",
   "require": {
     "php": "^8.1",
+    "guzzlehttp/guzzle": "^7.0",
+    "php-di/php-di": "^6.4",
+    "slim/psr7": "^1.7",
+    "slim/slim": "^4",
     "symfony/console": "^6.0"
   },
   "autoload": {
@@ -10,11 +14,16 @@
       "App\\": "src/"
     }
   },
-  "bin": ["bin/console.php"],
+  "bin": [
+    "bin/console.php"
+  ],
   "config": {
-    "bin-dir": "bin"
+    "bin-dir": "bin",
+    "sort-packages": true,
+    "optimize-autoloader": true
   },
   "scripts": {
+    "start": "php -S localhost:8080 -t public public/index.php",
     "user:add": "php bin/console.php user:add",
     "user:add:interactive": "php bin/console.php user:add"
   }

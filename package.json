@@ -1,7 +1,6 @@
 {
   "name": "open-file-sharing",
   "private": true,
-  "type": "module",
   "scripts": {
     "install:all": "nx run-many --target=install --all",
     "generate:contracts": "nx run shared-types:generate",
