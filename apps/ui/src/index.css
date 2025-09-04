@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS variables and base styles */
+:root {
+  --bg: 250 250 250;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+.container-app {
+  @apply min-h-screen flex flex-col;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply bg-brand-600 text-white hover:bg-brand-700 focus:ring-4 focus:ring-brand-200;
+}
+
+.input {
+  @apply w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-card p-6;
+}
