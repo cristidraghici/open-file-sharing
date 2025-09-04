@@ -1,11 +1,21 @@
 {
   "name": "open-file-sharing",
   "private": true,
+  "type": "module",
   "scripts": {
     "install:all": "nx run-many --target=install --all",
-    "generate:contracts": "nx run shared-types:generate"
+    "generate:contracts": "nx run shared-types:generate",
+    "user:add": "node ./scripts/user-management/add-user.js",
+    "user:manage": "node ./scripts/user-management/index.js"
   },
   "devDependencies": {
+    "@inquirer/prompts": "^7.8.4",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "figlet": "^1.6.0",
     "nx": "21.4.1"
+  },
+  "bin": {
+    "ofs-user": "./scripts/user-management/cli.js"
   }
 }
