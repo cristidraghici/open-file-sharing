@@ -1,12 +1,38 @@
+# Application
+.env
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# SlimPHP
+vendor/
+
+# Compiled output
 build/
 dist/
+tmp/
 
+# NX
 .nx/cache
 .nx/installation
 .nx/workspace-data
 
-.env
-!.env.example
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-node_modules/
-vendor/
+# Visual Studio Code
+.vscode/
+.history/*
+
+# System files
+.DS_Store
+Thumbs.db
