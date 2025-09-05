@@ -16,5 +16,9 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
+    fs: {
+      // allow serving files from the monorepo root (two levels up is the repo root)
+      allow: [path.resolve(__dirname, ".."), path.resolve(__dirname, "../../")],
+    },
   },
 });

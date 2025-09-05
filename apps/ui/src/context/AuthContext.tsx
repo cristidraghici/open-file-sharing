@@ -7,12 +7,11 @@ import React, {
   useState,
 } from "react";
 import { api, endpoints } from "../services/api";
+import type { components } from "../../../../libs/shared-types/generated/ts";
 
-export interface User {
-  id: string;
-  username: string;
-  roles: string[];
-}
+type User = NonNullable<components["schemas"]["User"]>;
+type LoginRequest = components["schemas"]["LoginRequest"];
+type AuthResponse = components["schemas"]["AuthResponse"];
 
 interface AuthState {
   user: User | null;
@@ -45,9 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const { data } = await api.post(endpoints.login, { username, password });
-    const token: string = data?.data?.token;
-    const user: User = data?.data?.user;
+    const payload: LoginRequest = { username, password };
+    const { data } = await api.post<AuthResponse>(endpoints.login, payload);
+    const token: string = (data as any)?.data?.token;
+    const user: User = (data as any)?.data?.user as User;
     if (token) localStorage.setItem("ofs_token", token);
     if (user) localStorage.setItem("ofs_user", JSON.stringify(user));
     setState({ user: user ?? null, token: token ?? null, loading: false });
@@ -61,8 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const refreshMe = useCallback(async () => {
     try {
-      const { data } = await api.get(endpoints.me);
-      const user: User = data?.data;
+      const { data } = await api.get<{ data: User }>(endpoints.me);
+      const user: User = (data as any)?.data as User;
       if (user) {
         localStorage.setItem("ofs_user", JSON.stringify(user));
         setState((s) => ({ ...s, user }));
