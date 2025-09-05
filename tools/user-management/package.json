@@ -1,0 +1,23 @@
+{
+  "name": "@open-file-sharing/user-management",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Open File Sharing - User Management CLI and interactive tool",
+  "bin": {
+    "ofs-user": "./cli.js"
+  },
+  "scripts": {
+    "start": "node ./index.js",
+    "add": "node ./add-user.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.8.4",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "figlet": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

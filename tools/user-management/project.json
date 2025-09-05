@@ -1,0 +1,36 @@
+{
+  "name": "user-management",
+  "root": "tools/user-management",
+  "sourceRoot": "tools/user-management",
+  "projectType": "application",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm install",
+        "cwd": "tools/user-management"
+      }
+    },
+    "manage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ./index.js",
+        "cwd": "tools/user-management"
+      }
+    },
+    "add": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ./add-user.js",
+        "cwd": "tools/user-management"
+      }
+    },
+    "cli": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ./cli.js",
+        "cwd": "tools/user-management"
+      }
+    }
+  }
+}

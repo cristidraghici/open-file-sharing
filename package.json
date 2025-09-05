@@ -4,8 +4,8 @@
   "scripts": {
     "install:all": "nx run-many --target=install --all",
     "generate:contracts": "nx run shared-types:generate",
-    "user:add": "node ./scripts/user-management/add-user.js",
-    "user:manage": "node ./scripts/user-management/index.js"
+    "user:add": "node ./tools/user-management/add-user.js",
+    "user:manage": "node ./tools/user-management/index.js"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.8.4",
