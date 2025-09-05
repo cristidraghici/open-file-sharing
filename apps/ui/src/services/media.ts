@@ -1,34 +1,61 @@
+import type { components } from "@open-file-sharing/shared-types";
 import { api, API_BASE_URL, endpoints } from "./api";
 
-export type MediaMeta = {
-  id: string;
-  filename: string;
-  size: number;
-  mime: string;
-  uploadedAt?: string | null;
+// Shared type aliases
+export type FileMetadata = components["schemas"]["FileMetadata"];
+export type MediaListResponse = components["schemas"]["FileMetadata"][];
+export type MediaListResponseWithMeta = {
+  data: components["schemas"]["FileMetadata"][];
+  meta: components["schemas"]["PaginationMeta"];
+  links: components["schemas"]["Links"];
 };
 
-export async function uploadMedia(file: File, onUploadProgress?: (pct: number) => void): Promise<MediaMeta> {
+export async function uploadMedia(
+  file: File,
+  onUploadProgress?: (pct: number) => void
+): Promise<FileMetadata> {
   const form = new FormData();
   form.append("file", file);
 
-  const { data } = await api.post<{ data: MediaMeta }>(endpoints.mediaUpload, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-    onUploadProgress: (evt) => {
-      if (!evt.total) return;
-      const pct = Math.round((evt.loaded * 100) / evt.total);
-      onUploadProgress?.(pct);
-    },
-  });
+  const { data } = await api.post<{ data: FileMetadata }>(
+    endpoints.mediaUpload,
+    form,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (evt) => {
+        if (!evt.total) return;
+        const pct = Math.round((evt.loaded * 100) / evt.total);
+        onUploadProgress?.(pct);
+      },
+    }
+  );
 
-  return (data as any)?.data as MediaMeta;
+  return data?.data as FileMetadata;
 }
 
 export function mediaUrl(id: string) {
-  return `${API_BASE_URL}${endpoints.mediaById(id)}`;
+  return `${API_BASE_URL}${endpoints.mediaContentById(id)}`;
 }
 
-export async function listMedia(): Promise<MediaMeta[]> {
-  const { data } = await api.get<{ data: MediaMeta[] }>(endpoints.mediaList);
-  return (data as any)?.data ?? [];
+export interface ListMediaParams {
+  page?: number;
+  per_page?: number;
+  type?: "image" | "video" | "document" | "other";
+}
+
+export async function listMedia(
+  params: ListMediaParams = {}
+): Promise<MediaListResponseWithMeta> {
+  const { data } = await api.get<MediaListResponseWithMeta>(
+    endpoints.mediaList,
+    { params }
+  );
+  return data as MediaListResponseWithMeta;
+}
+
+export async function getMediaById(id: string): Promise<FileMetadata> {
+  const { data } = await api.get<{ data: FileMetadata }>(
+    endpoints.mediaById(id)
+  );
+  return data?.data as FileMetadata;
 }

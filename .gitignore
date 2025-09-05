@@ -13,14 +13,13 @@ vendor/
 
 # IDEs and editors
 .idea/
+.cursor/
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-
-# Visual Studio Code
 .vscode/
 .history/*
 

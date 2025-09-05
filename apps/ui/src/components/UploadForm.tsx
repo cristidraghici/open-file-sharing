@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { MediaMeta, uploadMedia } from "../services/media";
+import { FileMetadata, uploadMedia } from "../services/media";
 
 interface Props {
-  onUploaded?: (meta: MediaMeta) => void;
+  onUploaded?: (meta: FileMetadata) => void;
 }
 
 export const UploadForm: React.FC<Props> = ({ onUploaded }) => {

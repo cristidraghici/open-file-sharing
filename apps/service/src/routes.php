@@ -13,6 +13,12 @@ use OpenFileSharing\Dto\Model\User as UserDto;
 use OpenFileSharing\Dto\Model\AuthResponseData;
 use OpenFileSharing\Dto\Model\AuthResponse;
 use App\Util\Serializer;
+use OpenFileSharing\Dto\Model\FileMetadata as FileMetadataDto;
+use OpenFileSharing\Dto\Model\MediaListGetResponse200;
+use OpenFileSharing\Dto\Model\MediaUploadPostResponse201;
+use OpenFileSharing\Dto\Model\MediaIdGetResponse200;
+use OpenFileSharing\Dto\Model\PaginationMeta;
+use OpenFileSharing\Dto\Model\Links;
 use Slim\Psr7\Stream;
 
 return function (Slim\App $app) {
@@ -69,9 +75,13 @@ return function (Slim\App $app) {
             file_put_contents($tmpPath, $stream->getContents());
         }
 
+        // Get current user from auth middleware
+        $auth = $request->getAttribute('auth', []);
+        $currentUsername = $auth['username'] ?? 'unknown';
+
         $media = new MediaService();
         try {
-            $meta = $media->store($clientFilename, $tmpPath);
+            $meta = $media->store($clientFilename, $tmpPath, $currentUsername);
         } catch (\Throwable $e) {
             $response->getBody()->write(json_encode([
                 'error' => [
@@ -82,12 +92,92 @@ return function (Slim\App $app) {
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
 
-        $response->getBody()->write(json_encode(['data' => $meta]));
+        // Map to shared FileMetadata DTO
+        $fileMetadataDto = (new FileMetadataDto())
+            ->setId((string)$meta['id'])
+            ->setFileName((string)$meta['filename'])
+            ->setFileType(Serializer::inferFileTypeFromMime((string)$meta['mime']))
+            ->setSize((int)$meta['size'])
+            ->setUploadedBy($currentUsername)
+            ->setUploadedAt(new \DateTime('now'));
+
+        // Create the proper response structure
+        $responseDto = (new MediaUploadPostResponse201())
+            ->setData($fileMetadataDto);
+
+        $response->getBody()->write(json_encode(['data' => Serializer::fileMetadataToArray($responseDto->getData())]));
         return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
     })->add(new AuthMiddleware());
 
-    // Media: Retrieve by id
+    // Media: Retrieve by id (metadata)
     $app->get('/api/media/{id}', function (Request $request, Response $response, array $args) {
+        $id = (string)($args['id'] ?? '');
+        if ($id === '') {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Missing media id',
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $media = new MediaService();
+        $file = $media->findById($id);
+        if ($file === null) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Media not found',
+                ]
+            ]));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Get metadata from the media service
+        $all = $media->listAll();
+        $fileMeta = null;
+        foreach ($all as $m) {
+            if ($m['id'] === $id) {
+                $fileMeta = $m;
+                break;
+            }
+        }
+
+        if ($fileMeta === null) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Media metadata not found',
+                ]
+            ]));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Map to shared FileMetadata DTO
+        $fileMetadataDto = (new FileMetadataDto())
+            ->setId((string)$fileMeta['id'])
+            ->setFileName((string)$fileMeta['filename'])
+            ->setFileType(Serializer::inferFileTypeFromMime((string)($fileMeta['mime'] ?? 'application/octet-stream')))
+            ->setSize((int)$fileMeta['size'])
+            ->setUploadedBy($fileMeta['uploadedBy'] ?? 'unknown');
+        if (!empty($fileMeta['uploadedAt'])) {
+            try {
+                $fileMetadataDto->setUploadedAt(new \DateTime((string)$fileMeta['uploadedAt']));
+            } catch (\Throwable $e) {
+            }
+        }
+
+        // Create the proper response structure
+        $responseDto = (new MediaIdGetResponse200())
+            ->setData($fileMetadataDto);
+
+        $response->getBody()->write(json_encode(['data' => Serializer::fileMetadataToArray($responseDto->getData())]));
+        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+    });
+
+    // Media: Serve file content by id
+    $app->get('/api/media/{id}/content', function (Request $request, Response $response, array $args) {
         $id = (string)($args['id'] ?? '');
         if ($id === '') {
             $response->getBody()->write(json_encode([
@@ -131,10 +221,87 @@ return function (Slim\App $app) {
 
     // Media: List all (protected)
     $app->get('/api/media', function (Request $request, Response $response) {
-        $media = new MediaService();
-        $all = $media->listAll();
+        // Parse query parameters
+        $queryParams = $request->getQueryParams();
+        $page = max(1, (int)($queryParams['page'] ?? 1));
+        $perPage = max(1, min(100, (int)($queryParams['per_page'] ?? 20))); // Limit to 100 items per page
+        $type = $queryParams['type'] ?? null;
+        
+        // Validate type parameter
+        if ($type !== null && !in_array($type, ['image', 'video', 'document', 'other'], true)) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid type parameter. Must be one of: image, video, document, other',
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
 
-        $response->getBody()->write(json_encode(['data' => $all]));
+        $media = new MediaService();
+        $result = $media->listPaginated($page, $perPage, $type);
+
+        // Map array items to shared DTOs
+        $items = [];
+        foreach ($result['items'] as $m) {
+            $dto = (new FileMetadataDto())
+                ->setId((string)$m['id'])
+                ->setFileName((string)$m['filename'])
+                ->setFileType(Serializer::inferFileTypeFromMime((string)($m['mime'] ?? 'application/octet-stream')))
+                ->setSize((int)$m['size'])
+                ->setUploadedBy($m['uploadedBy'] ?? 'unknown');
+            if (!empty($m['uploadedAt'])) {
+                try {
+                    $dto->setUploadedAt(new \DateTime((string)$m['uploadedAt']));
+                } catch (\Throwable $e) {
+                }
+            }
+            $items[] = $dto;
+        }
+
+        // Create pagination metadata
+        $total = $result['total'];
+        $totalPages = (int)ceil($total / $perPage);
+        
+        $paginationMeta = (new PaginationMeta())
+            ->setPage($page)
+            ->setPerPage($perPage)
+            ->setTotal($total);
+
+        // Create pagination links
+        $baseUrl = '/api/media';
+        $queryString = http_build_query(array_filter([
+            'per_page' => $perPage !== 20 ? $perPage : null,
+            'type' => $type,
+        ]));
+        $urlSuffix = $queryString ? '?' . $queryString : '';
+        
+        $links = (new Links())
+            ->setFirst($baseUrl . ($queryString ? '?' . $queryString . '&page=1' : '?page=1'))
+            ->setLast($baseUrl . ($queryString ? '?' . $queryString . '&page=' . $totalPages : '?page=' . $totalPages))
+            ->setPrev($page > 1 ? $baseUrl . ($queryString ? '?' . $queryString . '&page=' . ($page - 1) : '?page=' . ($page - 1)) : null)
+            ->setNext($page < $totalPages ? $baseUrl . ($queryString ? '?' . $queryString . '&page=' . ($page + 1) : '?page=' . ($page + 1)) : null);
+
+        // Create the proper response structure
+        $responseDto = (new MediaListGetResponse200())
+            ->setData($items)
+            ->setMeta($paginationMeta)
+            ->setLinks($links);
+
+        $response->getBody()->write(json_encode([
+            'data' => Serializer::fileMetadataListToArray($responseDto->getData()),
+            'meta' => [
+                'page' => $responseDto->getMeta()->getPage(),
+                'per_page' => $responseDto->getMeta()->getPerPage(),
+                'total' => $responseDto->getMeta()->getTotal(),
+            ],
+            'links' => [
+                'first' => $responseDto->getLinks()->getFirst(),
+                'last' => $responseDto->getLinks()->getLast(),
+                'prev' => $responseDto->getLinks()->getPrev(),
+                'next' => $responseDto->getLinks()->getNext(),
+            ]
+        ]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     })->add(new AuthMiddleware());
 

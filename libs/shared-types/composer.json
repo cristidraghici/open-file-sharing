@@ -19,5 +19,8 @@
     "allow-plugins": {
       "php-http/discovery": true
     }
+  },
+  "scripts": {
+    "generate": "php vendor/bin/jane-openapi generate --config-file=.openapi-php-config.php"
   }
 }

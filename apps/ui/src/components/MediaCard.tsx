@@ -1,33 +1,63 @@
-import React from "react";
-import { MediaMeta, mediaUrl } from "../services/media";
+import React, { useMemo } from "react";
+import { FileMetadata, mediaUrl } from "../services/media";
 
 interface Props {
-  media: MediaMeta;
+  media: FileMetadata;
 }
 
 export const MediaCard: React.FC<Props> = ({ media }) => {
-  const href = mediaUrl(media.id);
-  const isImage = media.mime.startsWith("image/");
+  const {
+    id = "",
+    fileType = "other",
+    size = 0,
+    fileName: name = "(untitled)",
+    uploadedAt: uploadedAtStr,
+    isPublic = false,
+  } = media;
+
+  const href = useMemo(() => (id ? mediaUrl(id) : undefined), [id]);
+  const uploadedAt = useMemo(
+    () => (uploadedAtStr ? new Date(uploadedAtStr) : undefined),
+    [uploadedAtStr]
+  );
+  const isImage = fileType === "image";
 
   return (
     <div className="border rounded-lg p-3 bg-white shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <div className="font-medium">{media.filename}</div>
+          <div className="font-medium">{name}</div>
           <div className="text-xs text-gray-500">
-            {media.mime} · {(media.size / 1024).toFixed(1)} KB
+            {fileType} · {(size / 1024).toFixed(1)} KB
           </div>
-          <div className="text-xs text-gray-500">id: {media.id}</div>
+          {id && <div className="text-xs text-gray-500">id: {id}</div>}
+          {uploadedAt && (
+            <div className="text-xs text-gray-500">
+              uploaded {uploadedAt.toLocaleString()}
+            </div>
+          )}
+          {isPublic && (
+            <div className="mt-1 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Public
+            </div>
+          )}
         </div>
-        <a className="btn btn-secondary" href={href} target="_blank" rel="noreferrer">
-          Open
-        </a>
+        {href && (
+          <a
+            className="btn btn-secondary"
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open
+          </a>
+        )}
       </div>
-      {isImage && (
+      {isImage && href && (
         <a href={href} target="_blank" rel="noreferrer">
           <img
             src={href}
-            alt={media.filename}
+            alt={name}
             className="mt-3 max-h-56 rounded object-contain w-full bg-gray-50"
             loading="lazy"
           />

@@ -5,9 +5,7 @@
   "main": "generated/ts/index.ts",
   "types": "generated/ts/index.ts",
   "scripts": {
-    "generate:ts": "openapi-typescript openapi.yaml -o generated/ts/index.ts",
-    "generate:php": "php vendor/bin/jane-openapi generate --config-file=.openapi-php-config.php",
-    "generate": "npm run generate:ts && npm run generate:php"
+    "generate": "openapi-typescript openapi.yaml -o generated/ts/index.ts"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

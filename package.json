@@ -1,6 +1,10 @@
 {
   "name": "open-file-sharing",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
   "scripts": {
     "install:all": "nx run-many --target=install --all",
     "generate:contracts": "nx run shared-types:generate",

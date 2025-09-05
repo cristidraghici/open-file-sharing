@@ -6,14 +6,15 @@
     "generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run generate",
+        "commands": ["composer generate", "npm run generate"],
+        "parallel": false,
         "cwd": "libs/shared-types"
       }
     },
     "install": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npm install", "composer install"],
+        "commands": ["composer install", "npm install"],
         "parallel": false,
         "cwd": "libs/shared-types"
       }

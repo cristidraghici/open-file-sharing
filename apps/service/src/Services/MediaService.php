@@ -26,9 +26,10 @@ final class MediaService
      * Store an uploaded file and return metadata.
      * @param string $clientFilename
      * @param string $streamPath Temporary uploaded file path
+     * @param string $uploadedBy Username who uploaded the file
      * @return array{id:string,filename:string,size:int,mime:string}
      */
-    public function store(string $clientFilename, string $streamPath): array
+    public function store(string $clientFilename, string $streamPath, string $uploadedBy = 'unknown'): array
     {
         $id = bin2hex(random_bytes(16));
         $ext = pathinfo($clientFilename, PATHINFO_EXTENSION);
@@ -57,6 +58,7 @@ final class MediaService
             'size' => $size,
             'mime' => $mime,
             'uploadedAt' => date('c'),
+            'uploadedBy' => $uploadedBy,
         ]));
 
         return [
@@ -136,6 +138,7 @@ final class MediaService
                 'size' => (int)$size,
                 'mime' => $mime,
                 'uploadedAt' => $meta['uploadedAt'] ?? null,
+                'uploadedBy' => $meta['uploadedBy'] ?? 'unknown',
             ];
         }
 
@@ -162,6 +165,7 @@ final class MediaService
                 'filename' => $basename,
                 'size' => (int)(filesize($file) ?: 0),
                 'mime' => mime_content_type($file) ?: 'application/octet-stream',
+                'uploadedBy' => 'unknown',
                 'uploadedAt' => date('c', filemtime($file) ?: time()),
             ];
         }
@@ -177,6 +181,78 @@ final class MediaService
         });
 
         return $items;
+    }
+
+    /**
+     * List metadata for stored media with pagination and filtering.
+     * @param int $page Page number (1-based)
+     * @param int $perPage Items per page
+     * @param string|null $type Filter by file type (image, video, document, other)
+     * @return array{items:array<int,array{id:string,filename:string,size:int,mime:string,uploadedAt?:string|null,uploadedBy?:string}>,total:int,page:int,per_page:int}
+     */
+    public function listPaginated(int $page = 1, int $perPage = 20, ?string $type = null): array
+    {
+        $allItems = $this->listAll();
+        
+        // Filter by type if specified
+        if ($type !== null) {
+            $allItems = array_filter($allItems, function ($item) use ($type) {
+                $mime = $item['mime'] ?? '';
+                return $this->matchesFileType($mime, $type);
+            });
+        }
+        
+        $total = count($allItems);
+        $offset = ($page - 1) * $perPage;
+        $items = array_slice($allItems, $offset, $perPage);
+        
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+    }
+
+    /**
+     * Check if a MIME type matches the specified file type.
+     */
+    private function matchesFileType(string $mime, string $type): bool
+    {
+        switch ($type) {
+            case 'image':
+                return str_starts_with($mime, 'image/');
+            case 'video':
+                return str_starts_with($mime, 'video/');
+            case 'document':
+                return in_array($mime, [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.ms-powerpoint',
+                    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    'text/plain',
+                    'text/csv',
+                ], true);
+            case 'other':
+                return !str_starts_with($mime, 'image/') && 
+                       !str_starts_with($mime, 'video/') && 
+                       !in_array($mime, [
+                           'application/pdf',
+                           'application/msword',
+                           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                           'application/vnd.ms-excel',
+                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                           'application/vnd.ms-powerpoint',
+                           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                           'text/plain',
+                           'text/csv',
+                       ], true);
+            default:
+                return false;
+        }
     }
 
     private function sanitizeFilename(string $name): string

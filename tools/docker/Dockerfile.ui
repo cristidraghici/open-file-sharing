@@ -3,14 +3,23 @@ FROM node:22-alpine as development
 
 WORKDIR /app
 
-# Copy package files
-COPY apps/ui/package*.json ./
+# Copy root package files for workspace setup
+COPY package*.json ./
+COPY nx.json ./
 
-# Install dependencies
+# Copy all package.json files for workspace dependencies
+COPY apps/ui/package*.json ./apps/ui/
+COPY libs/shared-types/package*.json ./libs/shared-types/
+
+# Install dependencies using npm workspaces
 RUN npm ci
 
 # Copy source code
-COPY apps/ui .
+COPY apps/ui ./apps/ui
+COPY libs/shared-types ./libs/shared-types
+
+# Set working directory to UI app
+WORKDIR /app/apps/ui
 
 # Start development server
 CMD ["npm", "run", "start"]
