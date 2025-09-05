@@ -1,6 +1,7 @@
 import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { addUser } from "./add-user.js";
+import { listUsers } from "./list-users.js";
 
 async function main() {
   console.log("\n" + chalk.blue.bold("Open File Sharing - User Management"));
@@ -22,9 +23,7 @@ async function main() {
           break;
 
         case "list":
-          console.log("\n" + chalk.yellow("Listing users..."));
-          // TODO: Implement user listing
-          console.log(chalk.yellow("User listing will be implemented soon."));
+          await listUsers();
           break;
 
         case "exit":

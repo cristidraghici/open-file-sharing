@@ -4,6 +4,7 @@ import { Command } from "commander";
 import figlet from "figlet";
 import { readFile } from "fs/promises";
 import { addUser } from "./add-user.js";
+import { listUsers } from "./list-users.js";
 
 const packageJson = JSON.parse(
   await readFile(new URL(process.cwd() + "package.json", import.meta.url))
@@ -29,6 +30,18 @@ program
   .action(async () => {
     try {
       await addUser();
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("list")
+  .description("List all users")
+  .action(async () => {
+    try {
+      await listUsers();
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);

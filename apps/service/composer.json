@@ -35,6 +35,7 @@
   "scripts": {
     "start": "php -S localhost:8080 -t public public/index.php",
     "user:add": "php bin/console.php user:add",
-    "user:add:interactive": "php bin/console.php user:add"
+    "user:add:interactive": "php bin/console.php user:add",
+    "user:list": "php bin/console.php user:list"
   }
 }

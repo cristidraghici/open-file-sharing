@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node ./index.js",
-    "add": "node ./add-user.js"
+    "add": "node ./add-user.js",
+    "list": "node ./list-users.js"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.4",
