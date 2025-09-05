@@ -10,6 +10,7 @@ use OpenFileSharing\Dto\Model\LoginRequest;
 use OpenFileSharing\Dto\Model\User as UserDto;
 use OpenFileSharing\Dto\Model\AuthResponseData;
 use OpenFileSharing\Dto\Model\AuthResponse;
+use App\Util\Serializer;
 
 return function (Slim\App $app) {
     // CORS Pre-Flight OPTIONS Request Handler
@@ -65,14 +66,14 @@ return function (Slim\App $app) {
         $token = $tokenService->createToken([
             'sub' => $user['id'],
             'username' => $user['username'],
-            'roles' => $user['roles'],
+            'role' => $user['role'],
         ]);
 
         // Build User DTO from service result
         $userDto = (new UserDto())
             ->setId((string)$user['id'])
             ->setUsername((string)$user['username'])
-            ->setRoles((array)$user['roles']);
+            ->setRole((string)$user['role']);
 
         // Build Auth DTOs
         $dataDto = (new AuthResponseData())
@@ -81,15 +82,11 @@ return function (Slim\App $app) {
         $authResponseDto = (new AuthResponse())
             ->setData($dataDto);
 
-        // Serialize manually to arrays via getters for JSON response
+        // Serialize DTOs for JSON response
         $response->getBody()->write(json_encode([
             'data' => [
                 'token' => $authResponseDto->getData()->getToken(),
-                'user' => [
-                    'id' => $authResponseDto->getData()->getUser()->getId(),
-                    'username' => $authResponseDto->getData()->getUser()->getUsername(),
-                    'roles' => $authResponseDto->getData()->getUser()->getRoles(),
-                ],
+                'user' => Serializer::userToArray($authResponseDto->getData()->getUser()),
             ]
         ]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
@@ -121,13 +118,13 @@ return function (Slim\App $app) {
             return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
 
-        $user = [
-            'id' => $payload['sub'] ?? null,
-            'username' => $payload['username'] ?? null,
-            'roles' => $payload['roles'] ?? [],
-        ];
+        // Build User DTO from token payload and serialize
+        $userDto = (new UserDto())
+            ->setId((string)($payload['sub'] ?? ''))
+            ->setUsername((string)($payload['username'] ?? ''))
+            ->setRole((string)($payload['role'] ?? ''));
 
-        $response->getBody()->write(json_encode(['data' => $user]));
+        $response->getBody()->write(json_encode(['data' => Serializer::userToArray($userDto)]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     });
 

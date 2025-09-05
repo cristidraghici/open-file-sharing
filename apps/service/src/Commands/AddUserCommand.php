@@ -12,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use OpenFileSharing\Dto\Model\User as UserDto;
+use App\Util\Serializer;
 
 class AddUserCommand extends Command
 {
@@ -134,14 +135,10 @@ class AddUserCommand extends Command
         $userDto = (new UserDto())
             ->setId(bin2hex(random_bytes(16)))
             ->setUsername((string)$username)
-            ->setRoles([$role]);
+            ->setRole($role);
 
-        // Save user to CSV file
-        $userData = [
-            $userDto->getUsername(),
-            $role,
-            $hashedPassword
-        ];
+        // Save user to CSV file using DTO serialization
+        $userData = Serializer::userToCsvRow($userDto, $hashedPassword);
 
         $fileExists = file_exists($usersFile);
         $file = fopen($usersFile, 'ab');

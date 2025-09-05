@@ -27,9 +27,15 @@ class User extends \ArrayObject
     /**
      * 
      *
-     * @var list<string>
+     * @var string
      */
-    protected $roles;
+    protected $password;
+    /**
+     * 
+     *
+     * @var string
+     */
+    protected $role;
     /**
      * 
      *
@@ -77,23 +83,45 @@ class User extends \ArrayObject
     /**
      * 
      *
-     * @return list<string>
+     * @return string
      */
-    public function getRoles(): array
+    public function getPassword(): string
     {
-        return $this->roles;
+        return $this->password;
     }
     /**
      * 
      *
-     * @param list<string> $roles
+     * @param string $password
      *
      * @return self
      */
-    public function setRoles(array $roles): self
+    public function setPassword(string $password): self
     {
-        $this->initialized['roles'] = true;
-        $this->roles = $roles;
+        $this->initialized['password'] = true;
+        $this->password = $password;
+        return $this;
+    }
+    /**
+     * 
+     *
+     * @return string
+     */
+    public function getRole(): string
+    {
+        return $this->role;
+    }
+    /**
+     * 
+     *
+     * @param string $role
+     *
+     * @return self
+     */
+    public function setRole(string $role): self
+    {
+        $this->initialized['role'] = true;
+        $this->role = $role;
         return $this;
     }
 }

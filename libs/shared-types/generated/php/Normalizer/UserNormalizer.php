@@ -45,17 +45,17 @@ class UserNormalizer implements DenormalizerInterface, NormalizerInterface, Deno
             $object->setUsername($data['username']);
             unset($data['username']);
         }
-        if (\array_key_exists('roles', $data)) {
-            $values = [];
-            foreach ($data['roles'] as $value) {
-                $values[] = $value;
-            }
-            $object->setRoles($values);
-            unset($data['roles']);
+        if (\array_key_exists('password', $data)) {
+            $object->setPassword($data['password']);
+            unset($data['password']);
         }
-        foreach ($data as $key => $value_1) {
+        if (\array_key_exists('role', $data)) {
+            $object->setRole($data['role']);
+            unset($data['role']);
+        }
+        foreach ($data as $key => $value) {
             if (preg_match('/.*/', (string) $key)) {
-                $object[$key] = $value_1;
+                $object[$key] = $value;
             }
         }
         return $object;
@@ -69,16 +69,15 @@ class UserNormalizer implements DenormalizerInterface, NormalizerInterface, Deno
         if ($data->isInitialized('username') && null !== $data->getUsername()) {
             $dataArray['username'] = $data->getUsername();
         }
-        if ($data->isInitialized('roles') && null !== $data->getRoles()) {
-            $values = [];
-            foreach ($data->getRoles() as $value) {
-                $values[] = $value;
-            }
-            $dataArray['roles'] = $values;
+        if ($data->isInitialized('password') && null !== $data->getPassword()) {
+            $dataArray['password'] = $data->getPassword();
         }
-        foreach ($data as $key => $value_1) {
+        if ($data->isInitialized('role') && null !== $data->getRole()) {
+            $dataArray['role'] = $data->getRole();
+        }
+        foreach ($data as $key => $value) {
             if (preg_match('/.*/', (string) $key)) {
-                $dataArray[$key] = $value_1;
+                $dataArray[$key] = $value;
             }
         }
         return $dataArray;

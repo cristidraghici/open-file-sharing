@@ -68,11 +68,12 @@ components:
           format: uuid
         username:
           type: string
-        roles:
-          type: array
-          items:
-            type: string
-            enum: [user, admin]
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+          enum: [user, admin]
 
     FileMetadata:
       type: object

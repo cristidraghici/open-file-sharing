@@ -45,7 +45,7 @@ final class AuthService
                     return [
                         'id' => $this->uuidFromString($username),
                         'username' => $username,
-                        'roles' => [$role],
+                        'role' => $role,
                     ];
                 }
                 fclose($handle);

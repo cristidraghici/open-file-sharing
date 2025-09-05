@@ -204,7 +204,10 @@ export interface components {
       /** Format: uuid */
       id?: string;
       username?: string;
-      roles?: ("user" | "admin")[];
+      /** Format: password */
+      password?: string;
+      /** @enum {string} */
+      role?: "user" | "admin";
     };
     FileMetadata: {
       /** Format: uuid */

@@ -43,14 +43,20 @@ export const LoginPage: React.FC = () => {
             </h1>
             <p className="mt-1 text-gray-600">Sign in to your account</p>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="on">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Username
               </label>
               <input
+                type="text"
+                id="username"
                 className="input mt-1"
                 placeholder="you@example.com"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                inputMode="email"
                 {...register("username")}
               />
               {errors.username && (
@@ -65,8 +71,10 @@ export const LoginPage: React.FC = () => {
               </label>
               <input
                 type="password"
+                id="password"
                 className="input mt-1"
                 placeholder="********"
+                autoComplete="current-password"
                 {...register("password")}
               />
               {errors.password && (
