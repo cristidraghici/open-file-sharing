@@ -35,5 +35,8 @@ return [
         'name' => 'Open File Sharing API',
         'version' => '1.0.0',
         'environment' => 'development', // 'production' or 'development'
+        // Base directory for uploads and the users.csv file
+        // By default, it points to the service local data directory
+        'storage' => __DIR__ . '/.data',
     ],
 ];

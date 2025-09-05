@@ -13,6 +13,8 @@ use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use OpenFileSharing\Dto\Model\User as UserDto;
 use App\Util\Serializer;
+use App\Util\Storage;
+use App\Util\Configuration;
 
 class AddUserCommand extends Command
 {
@@ -23,7 +25,9 @@ class AddUserCommand extends Command
 
     public function __construct(string $usersFile = null)
     {
-        $this->usersFile = $usersFile ?? getenv('USERS_CSV_PATH') ?: __DIR__ . '/../../.data/users.csv';
+        // Resolve users.csv path using Storage utility with optional config
+        $config = Configuration::load();
+        $this->usersFile = Storage::usersCsv($config);
 
         // Ensure the directory exists
         $dir = dirname($this->usersFile);
