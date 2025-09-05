@@ -6,17 +6,137 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Services\AuthService;
 use App\Services\TokenService;
+use App\Services\MediaService;
+use App\Middleware\AuthMiddleware;
 use OpenFileSharing\Dto\Model\LoginRequest;
 use OpenFileSharing\Dto\Model\User as UserDto;
 use OpenFileSharing\Dto\Model\AuthResponseData;
 use OpenFileSharing\Dto\Model\AuthResponse;
 use App\Util\Serializer;
+use Slim\Psr7\Stream;
 
 return function (Slim\App $app) {
     // CORS Pre-Flight OPTIONS Request Handler
     $app->options('/{routes:.+}', function (Request $request, Response $response) {
         return $response;
     });
+
+    // Media: Upload (protected)
+    $app->post('/api/media/upload', function (Request $request, Response $response) {
+        $uploadedFiles = $request->getUploadedFiles();
+        $file = $uploadedFiles['file'] ?? null;
+
+        if ($file === null) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Missing file in form-data under key "file"',
+                    'details' => ['fields' => ['file' => 'required']]
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        if ($file->getError() !== UPLOAD_ERR_OK) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'UPLOAD_ERROR',
+                    'message' => 'Upload failed',
+                    'details' => ['phpError' => $file->getError()]
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $clientFilename = $file->getClientFilename() ?? 'upload.bin';
+
+        // Get a temp path for MediaService; prefer stream URI when available
+        $tmpPath = $file->getStream()->getMetadata('uri') ?? null;
+        if (!is_string($tmpPath) || !is_file($tmpPath)) {
+            // Fallback: write to a temp file first
+            $tmpPath = tempnam(sys_get_temp_dir(), 'ofs_') ?: null;
+            if ($tmpPath === null) {
+                $response->getBody()->write(json_encode([
+                    'error' => [
+                        'code' => 'SERVER_ERROR',
+                        'message' => 'Could not create temporary file',
+                    ]
+                ]));
+                return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+            }
+            $stream = $file->getStream();
+            $stream->rewind();
+            file_put_contents($tmpPath, $stream->getContents());
+        }
+
+        $media = new MediaService();
+        try {
+            $meta = $media->store($clientFilename, $tmpPath);
+        } catch (\Throwable $e) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'SERVER_ERROR',
+                    'message' => 'Could not store uploaded file',
+                ]
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+
+        $response->getBody()->write(json_encode(['data' => $meta]));
+        return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
+    })->add(new AuthMiddleware());
+
+    // Media: Retrieve by id
+    $app->get('/api/media/{id}', function (Request $request, Response $response, array $args) {
+        $id = (string)($args['id'] ?? '');
+        if ($id === '') {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Missing media id',
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $media = new MediaService();
+        $file = $media->findById($id);
+        if ($file === null) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Media not found',
+                ]
+            ]));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        $fh = fopen($file['path'], 'rb');
+        if ($fh === false) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'SERVER_ERROR',
+                    'message' => 'Could not open media',
+                ]
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+
+        $stream = new Stream($fh);
+        return $response
+            ->withBody($stream)
+            ->withHeader('Content-Type', $file['mime'])
+            ->withHeader('Content-Disposition', 'inline');
+    });
+
+    // Media: List all (protected)
+    $app->get('/api/media', function (Request $request, Response $response) {
+        $media = new MediaService();
+        $all = $media->listAll();
+
+        $response->getBody()->write(json_encode(['data' => $all]));
+        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+    })->add(new AuthMiddleware());
 
     // Main route
     $app->get('/', function (Request $request, Response $response) {
