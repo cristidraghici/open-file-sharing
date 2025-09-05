@@ -1,0 +1,13 @@
+# Exclude large/unnecessary files from UI build context
+node_modules
+.npm
+.pnpm-store
+.git
+*.log
+dist
+build
+.next
+.cache
+coverage
+Dockerfile.local
+.env

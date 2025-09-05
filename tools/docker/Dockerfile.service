@@ -26,13 +26,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 # Copy composer files
-COPY composer.json composer.lock ./
+COPY apps/service/composer.json apps/service/composer.lock ./
+
+# Make local path repositories available to Composer during build
+# This ensures the path "../../libs/shared-types" in composer.json resolves.
+COPY libs/shared-types /libs/shared-types
 
 # Install dependencies
 RUN composer install --no-interaction --optimize-autoloader
 
 # Copy application files
-COPY . .
+COPY apps/service/. .
 
 # Set permissions
 RUN chown -R www-data:www-data /app && \

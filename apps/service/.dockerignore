@@ -1,0 +1,7 @@
+# Exclude unnecessary files from backend build context (when building from repo root, root .dockerignore also applies)
+node_modules
+vendor
+.git
+*.log
+.cache
+.env

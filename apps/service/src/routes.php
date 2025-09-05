@@ -6,6 +6,10 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Services\AuthService;
 use App\Services\TokenService;
+use OpenFileSharing\Dto\Model\LoginRequest;
+use OpenFileSharing\Dto\Model\User as UserDto;
+use OpenFileSharing\Dto\Model\AuthResponseData;
+use OpenFileSharing\Dto\Model\AuthResponse;
 
 return function (Slim\App $app) {
     // CORS Pre-Flight OPTIONS Request Handler
@@ -39,8 +43,14 @@ return function (Slim\App $app) {
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
+        // Build LoginRequest DTO
+        $loginDto = (new LoginRequest())
+            ->setUsername($username)
+            ->setPassword($password);
+
         $auth = new AuthService();
-        $user = $auth->verifyCredentials($username, $password);
+        // Verify using raw values (service API unchanged), DTO constructed for type parity
+        $user = $auth->verifyCredentials($loginDto->getUsername(), $loginDto->getPassword());
         if ($user === null) {
             $response->getBody()->write(json_encode([
                 'error' => [
@@ -58,10 +68,30 @@ return function (Slim\App $app) {
             'roles' => $user['roles'],
         ]);
 
-        $response->getBody()->write(json_encode(['data' => [
-            'token' => $token,
-            'user' => $user,
-        ]]));
+        // Build User DTO from service result
+        $userDto = (new UserDto())
+            ->setId((string)$user['id'])
+            ->setUsername((string)$user['username'])
+            ->setRoles((array)$user['roles']);
+
+        // Build Auth DTOs
+        $dataDto = (new AuthResponseData())
+            ->setToken($token)
+            ->setUser($userDto);
+        $authResponseDto = (new AuthResponse())
+            ->setData($dataDto);
+
+        // Serialize manually to arrays via getters for JSON response
+        $response->getBody()->write(json_encode([
+            'data' => [
+                'token' => $authResponseDto->getData()->getToken(),
+                'user' => [
+                    'id' => $authResponseDto->getData()->getUser()->getId(),
+                    'username' => $authResponseDto->getData()->getUser()->getUsername(),
+                    'roles' => $authResponseDto->getData()->getUser()->getRoles(),
+                ],
+            ]
+        ]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     });
 
@@ -124,4 +154,3 @@ return function (Slim\App $app) {
             ->withHeader('Content-Type', 'application/json');
     });
 };
-

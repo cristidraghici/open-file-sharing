@@ -1,0 +1,19 @@
+# Global ignores for monorepo build contexts
+# Prevent massive contexts and Windows tar errors on node_modules
+node_modules
+.git
+.nx
+.copilot
+*.log
+.data
+
+# Frontend specific
+apps/ui/node_modules
+apps/ui/.next
+apps/ui/dist
+apps/ui/build
+
+# Backend specific
+apps/service/vendor
+apps/service/.cache
+apps/service/.var

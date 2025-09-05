@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f429b46d91c18fba02b3196c475ab3a3",
+    "content-hash": "871e8cb302c0f27c2b800d130e856a1b",
     "packages": [
         {
             "name": "fig/http-message-util",
@@ -497,6 +497,33 @@
                 "source": "https://github.com/nikic/FastRoute/tree/master"
             },
             "time": "2018-02-13T20:26:39+00:00"
+        },
+        {
+            "name": "open-file-sharing/shared-types",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "../../libs/shared-types",
+                "reference": "1de5cd02a986a16b08d92c89d882cd0e5a3e131d"
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "jane-php/open-api-3": "^7.5",
+                "jane-php/open-api-runtime": "^7.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "OpenFileSharing\\Dto\\": "generated/php/"
+                }
+            },
+            "description": "Shared types and DTOs for Open File Sharing",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "php-di/invoker",
@@ -2046,12 +2073,12 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.1"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

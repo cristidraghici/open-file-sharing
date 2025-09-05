@@ -1,7 +1,8 @@
 services:
-  frontend:
+  ui:
     build:
-      context: ./apps/ui
+      context: .
+      dockerfile: tools/docker/Dockerfile.ui
       target: development
     volumes:
       - ./apps/ui:/app
@@ -9,9 +10,11 @@ services:
     ports:
       - "3001:3001"
 
-  backend:
+  service:
     build:
-      context: ./apps/service
+      context: .
+      dockerfile: tools/docker/Dockerfile.service
+      target: development
     volumes:
       - ./apps/service:/app
       - ./apps/service/public:/var/www/html

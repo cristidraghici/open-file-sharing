@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use OpenFileSharing\Dto\Model\User as UserDto;
 
 class AddUserCommand extends Command
 {
@@ -129,9 +130,15 @@ class AddUserCommand extends Command
         // Hash the password (using password_hash with PASSWORD_DEFAULT)
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
+        // Build User DTO from input
+        $userDto = (new UserDto())
+            ->setId(bin2hex(random_bytes(16)))
+            ->setUsername((string)$username)
+            ->setRoles([$role]);
+
         // Save user to CSV file
         $userData = [
-            $username,
+            $userDto->getUsername(),
             $role,
             $hashedPassword
         ];
@@ -152,7 +159,7 @@ class AddUserCommand extends Command
         fputcsv($file, $userData);
         fclose($file);
 
-        $io->success(sprintf('User "%s" has been successfully created with role "%s"', $username, $role));
+        $io->success(sprintf('User "%s" has been successfully created with role "%s"', $userDto->getUsername(), $role));
         $io->note(sprintf('User data stored in: %s', $usersFile));
 
         return Command::SUCCESS;
