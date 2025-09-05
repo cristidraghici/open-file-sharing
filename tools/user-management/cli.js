@@ -5,6 +5,7 @@ import figlet from "figlet";
 import { readFile } from "fs/promises";
 import { addUser } from "./add-user.js";
 import { listUsers } from "./list-users.js";
+import { deleteUser } from "./delete-user.js";
 
 const packageJson = JSON.parse(
   await readFile(new URL(process.cwd() + "package.json", import.meta.url))
@@ -30,6 +31,19 @@ program
   .action(async () => {
     try {
       await addUser();
+    } catch (error) {
+      console.error(chalk.red("Error:"), error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("delete")
+  .description("Delete a user (interactive selection if no username provided)")
+  .argument("[username]", "Username to delete (optional)")
+  .action(async (username) => {
+    try {
+      await deleteUser(username);
     } catch (error) {
       console.error(chalk.red("Error:"), error.message);
       process.exit(1);

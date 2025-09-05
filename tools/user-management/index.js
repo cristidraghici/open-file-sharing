@@ -2,6 +2,7 @@ import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { addUser } from "./add-user.js";
 import { listUsers } from "./list-users.js";
+import { deleteUser } from "./delete-user.js";
 
 async function main() {
   console.log("\n" + chalk.blue.bold("Open File Sharing - User Management"));
@@ -12,6 +13,7 @@ async function main() {
       choices: [
         { name: "Add a new user", value: "add" },
         { name: "List all users", value: "list" },
+        { name: "Delete a user", value: "delete" },
         { name: "Exit", value: "exit" },
       ],
     });
@@ -24,6 +26,10 @@ async function main() {
 
         case "list":
           await listUsers();
+          break;
+
+        case "delete":
+          await deleteUser();
           break;
 
         case "exit":

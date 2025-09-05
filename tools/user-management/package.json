@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node ./index.js",
     "add": "node ./add-user.js",
-    "list": "node ./list-users.js"
+    "list": "node ./list-users.js",
+    "delete": "node ./delete-user.js"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.4",

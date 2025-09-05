@@ -4,8 +4,10 @@
   "scripts": {
     "install:all": "nx run-many --target=install --all",
     "generate:contracts": "nx run shared-types:generate",
+    "users": "node ./tools/user-management/index.js",
     "user:add": "node ./tools/user-management/add-user.js",
-    "user:manage": "node ./tools/user-management/index.js"
+    "user:list": "node ./tools/user-management/list-users.js",
+    "user:delete": "node ./tools/user-management/delete-user.js"
   },
   "devDependencies": {
     "nx": "21.4.1"
