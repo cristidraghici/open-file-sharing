@@ -1,0 +1,20 @@
+{
+  "name": "create-zip",
+  "root": "tools/create-zip",
+  "sourceRoot": "tools/create-zip",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo 'No build step required for CLI tool'"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ./index.js"
+      }
+    }
+  }
+}

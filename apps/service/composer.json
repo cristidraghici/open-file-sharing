@@ -37,6 +37,7 @@
     "user:add": "php bin/console.php user:add",
     "user:add:interactive": "php bin/console.php user:add",
     "user:list": "php bin/console.php user:list",
-    "user:delete": "php bin/console.php user:delete"
+    "user:delete": "php bin/console.php user:delete",
+    "media:zip": "php bin/console.php media:zip"
   }
 }

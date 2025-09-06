@@ -8,6 +8,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use App\Commands\AddUserCommand;
 use App\Commands\ListUsersCommand;
 use App\Commands\DeleteUserCommand;
+use App\Commands\CreateZipCommand;
 use Symfony\Component\Console\Application;
 
 $application = new Application('Open File Sharing', '1.0.0');
@@ -16,5 +17,6 @@ $application = new Application('Open File Sharing', '1.0.0');
 $application->add(new AddUserCommand());
 $application->add(new ListUsersCommand());
 $application->add(new DeleteUserCommand());
+$application->add(new CreateZipCommand());
 
 $application->run();

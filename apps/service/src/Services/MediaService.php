@@ -47,7 +47,7 @@ final class MediaService
         }
 
         $size = filesize($target) ?: 0;
-        $mime = mime_content_type($target) ?: 'application/octet-stream';
+        $mime = $this->getMimeType($target);
 
         // Optionally, save a sidecar metadata file
         @file_put_contents($this->uploadsDir . DIRECTORY_SEPARATOR . $id . '.json', json_encode([
@@ -84,7 +84,7 @@ final class MediaService
                 $full = $this->uploadsDir . DIRECTORY_SEPARATOR . $storedAs;
                 return [
                     'path' => $full,
-                    'mime' => mime_content_type($full) ?: 'application/octet-stream',
+                    'mime' => $this->getMimeType($full),
                 ];
             }
         }
@@ -96,7 +96,7 @@ final class MediaService
             if (is_file($file)) {
                 return [
                     'path' => $file,
-                    'mime' => mime_content_type($file) ?: 'application/octet-stream',
+                    'mime' => $this->getMimeType($file),
                 ];
             }
         }
@@ -131,7 +131,7 @@ final class MediaService
                 continue;
             }
             $size = filesize($filePath) ?: (int)($meta['size'] ?? 0);
-            $mime = mime_content_type($filePath) ?: (string)($meta['mime'] ?? 'application/octet-stream');
+            $mime = $this->getMimeType($filePath);
             $items[] = [
                 'id' => $id,
                 'filename' => $filename,
@@ -156,15 +156,20 @@ final class MediaService
             // Skip if already included via metadata pass
             $already = false;
             foreach ($items as $it) {
-                if ($it['id'] === $id) { $already = true; break; }
+                if ($it['id'] === $id) {
+                    $already = true;
+                    break;
+                }
             }
-            if ($already) { continue; }
+            if ($already) {
+                continue;
+            }
 
             $items[] = [
                 'id' => $id,
                 'filename' => $basename,
                 'size' => (int)(filesize($file) ?: 0),
-                'mime' => mime_content_type($file) ?: 'application/octet-stream',
+                'mime' => $this->getMimeType($file),
                 'uploadedBy' => 'unknown',
                 'uploadedAt' => date('c', filemtime($file) ?: time()),
             ];
@@ -193,7 +198,7 @@ final class MediaService
     public function listPaginated(int $page = 1, int $perPage = 20, ?string $type = null): array
     {
         $allItems = $this->listAll();
-        
+
         // Filter by type if specified
         if ($type !== null) {
             $allItems = array_filter($allItems, function ($item) use ($type) {
@@ -201,11 +206,11 @@ final class MediaService
                 return $this->matchesFileType($mime, $type);
             });
         }
-        
+
         $total = count($allItems);
         $offset = ($page - 1) * $perPage;
         $items = array_slice($allItems, $offset, $perPage);
-        
+
         return [
             'items' => $items,
             'total' => $total,
@@ -237,19 +242,19 @@ final class MediaService
                     'text/csv',
                 ], true);
             case 'other':
-                return !str_starts_with($mime, 'image/') && 
-                       !str_starts_with($mime, 'video/') && 
-                       !in_array($mime, [
-                           'application/pdf',
-                           'application/msword',
-                           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                           'application/vnd.ms-excel',
-                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                           'application/vnd.ms-powerpoint',
-                           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                           'text/plain',
-                           'text/csv',
-                       ], true);
+                return !str_starts_with($mime, 'image/') &&
+                    !str_starts_with($mime, 'video/') &&
+                    !in_array($mime, [
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.ms-powerpoint',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        'text/plain',
+                        'text/csv',
+                    ], true);
             default:
                 return false;
         }
@@ -264,5 +269,45 @@ final class MediaService
         }
         return strtolower($name);
     }
-}
 
+    /**
+     * Get MIME type with fallback when fileinfo extension is not available
+     */
+    private function getMimeType(string $filePath): string
+    {
+        if (function_exists('mime_content_type')) {
+            $mime = mime_content_type($filePath);
+            if ($mime !== false) {
+                return $mime;
+            }
+        }
+
+        // Fallback: determine MIME type by file extension
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeMap = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            'mp4' => 'video/mp4',
+            'avi' => 'video/x-msvideo',
+            'mov' => 'video/quicktime',
+            'wmv' => 'video/x-ms-wmv',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            'zip' => 'application/zip',
+            'json' => 'application/json',
+        ];
+
+        return $mimeMap[$extension] ?? 'application/octet-stream';
+    }
+}

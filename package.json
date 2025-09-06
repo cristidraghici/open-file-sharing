@@ -11,7 +11,10 @@
     "users": "node ./tools/user-management/index.js",
     "user:add": "node ./tools/user-management/add-user.js",
     "user:list": "node ./tools/user-management/list-users.js",
-    "user:delete": "node ./tools/user-management/delete-user.js"
+    "user:delete": "node ./tools/user-management/delete-user.js",
+    "zip": "node ./tools/create-zip/index.js",
+    "zip:create": "node ./tools/create-zip/cli.js create",
+    "zip:list": "node ./tools/create-zip/cli.js list"
   },
   "devDependencies": {
     "nx": "21.4.1"
