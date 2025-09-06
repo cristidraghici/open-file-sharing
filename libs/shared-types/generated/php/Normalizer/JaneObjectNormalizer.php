@@ -40,9 +40,9 @@ class JaneObjectNormalizer implements DenormalizerInterface, NormalizerInterface
         
         \OpenFileSharing\Dto\Model\AuthMeGetResponse200::class => \OpenFileSharing\Dto\Normalizer\AuthMeGetResponse200Normalizer::class,
         
-        \OpenFileSharing\Dto\Model\MediaUploadPostBody::class => \OpenFileSharing\Dto\Normalizer\MediaUploadPostBodyNormalizer::class,
+        \OpenFileSharing\Dto\Model\MediaUploadsPostBody::class => \OpenFileSharing\Dto\Normalizer\MediaUploadsPostBodyNormalizer::class,
         
-        \OpenFileSharing\Dto\Model\MediaUploadPostResponse201::class => \OpenFileSharing\Dto\Normalizer\MediaUploadPostResponse201Normalizer::class,
+        \OpenFileSharing\Dto\Model\MediaUploadsPostResponse201::class => \OpenFileSharing\Dto\Normalizer\MediaUploadsPostResponse201Normalizer::class,
         
         \OpenFileSharing\Dto\Model\MediaListGetResponse200::class => \OpenFileSharing\Dto\Normalizer\MediaListGetResponse200Normalizer::class,
         
@@ -97,8 +97,8 @@ class JaneObjectNormalizer implements DenormalizerInterface, NormalizerInterface
             \OpenFileSharing\Dto\Model\PaginationMeta::class => false,
             \OpenFileSharing\Dto\Model\Links::class => false,
             \OpenFileSharing\Dto\Model\AuthMeGetResponse200::class => false,
-            \OpenFileSharing\Dto\Model\MediaUploadPostBody::class => false,
-            \OpenFileSharing\Dto\Model\MediaUploadPostResponse201::class => false,
+            \OpenFileSharing\Dto\Model\MediaUploadsPostBody::class => false,
+            \OpenFileSharing\Dto\Model\MediaUploadsPostResponse201::class => false,
             \OpenFileSharing\Dto\Model\MediaListGetResponse200::class => false,
             \OpenFileSharing\Dto\Model\MediaIdGetResponse200::class => false,
             \Jane\Component\JsonSchemaRuntime\Reference::class => false,

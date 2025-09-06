@@ -27,52 +27,38 @@ return function (Slim\App $app) {
         return $response;
     });
 
-    // Media: Upload (protected)
-    $app->post('/api/media/upload', function (Request $request, Response $response) {
-        $uploadedFiles = $request->getUploadedFiles();
-        $file = $uploadedFiles['file'] ?? null;
 
-        if ($file === null) {
+    // Media: Upload multiple (protected)
+    $app->post('/api/media/uploads', function (Request $request, Response $response) {
+        $uploadedFiles = $request->getUploadedFiles();
+        $filesParam = $uploadedFiles['files'] ?? null;
+
+        // Support fallback if client sent a single 'file'
+        if ($filesParam === null && isset($uploadedFiles['file'])) {
+            $filesParam = [$uploadedFiles['file']];
+        }
+
+        // Normalize to array of UploadedFileInterface
+        $files = [];
+        if (is_array($filesParam)) {
+            foreach ($filesParam as $f) {
+                if ($f !== null) {
+                    $files[] = $f;
+                }
+            }
+        } elseif ($filesParam !== null) {
+            $files = [$filesParam];
+        }
+
+        if (count($files) === 0) {
             $response->getBody()->write(json_encode([
                 'error' => [
                     'code' => 'VALIDATION_ERROR',
-                    'message' => 'Missing file in form-data under key "file"',
-                    'details' => ['fields' => ['file' => 'required']]
+                    'message' => 'Missing files in form-data under key "files[]"',
+                    'details' => ['fields' => ['files' => 'required']]
                 ]
             ]));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-        }
-
-        if ($file->getError() !== UPLOAD_ERR_OK) {
-            $response->getBody()->write(json_encode([
-                'error' => [
-                    'code' => 'UPLOAD_ERROR',
-                    'message' => 'Upload failed',
-                    'details' => ['phpError' => $file->getError()]
-                ]
-            ]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-        }
-
-        $clientFilename = $file->getClientFilename() ?? 'upload.bin';
-
-        // Get a temp path for MediaService; prefer stream URI when available
-        $tmpPath = $file->getStream()->getMetadata('uri') ?? null;
-        if (!is_string($tmpPath) || !is_file($tmpPath)) {
-            // Fallback: write to a temp file first
-            $tmpPath = tempnam(sys_get_temp_dir(), 'ofs_') ?: null;
-            if ($tmpPath === null) {
-                $response->getBody()->write(json_encode([
-                    'error' => [
-                        'code' => 'SERVER_ERROR',
-                        'message' => 'Could not create temporary file',
-                    ]
-                ]));
-                return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-            }
-            $stream = $file->getStream();
-            $stream->rewind();
-            file_put_contents($tmpPath, $stream->getContents());
         }
 
         // Get current user from auth middleware
@@ -80,32 +66,46 @@ return function (Slim\App $app) {
         $currentUsername = $auth['username'] ?? 'unknown';
 
         $media = new MediaService();
-        try {
-            $meta = $media->store($clientFilename, $tmpPath, $currentUsername);
-        } catch (\Throwable $e) {
-            $response->getBody()->write(json_encode([
-                'error' => [
-                    'code' => 'SERVER_ERROR',
-                    'message' => 'Could not store uploaded file',
-                ]
-            ]));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        $items = [];
+
+        foreach ($files as $file) {
+            if ($file->getError() !== UPLOAD_ERR_OK) {
+                continue; // skip errored files
+            }
+
+            $clientFilename = $file->getClientFilename() ?? 'upload.bin';
+
+            // Get a temp path for MediaService; prefer stream URI when available
+            $tmpPath = $file->getStream()->getMetadata('uri') ?? null;
+            if (!is_string($tmpPath) || !is_file($tmpPath)) {
+                // Fallback: write to a temp file first
+                $tmpPath = tempnam(sys_get_temp_dir(), 'ofs_') ?: null;
+                if ($tmpPath === null) {
+                    continue; // skip when cannot create temp file
+                }
+                $stream = $file->getStream();
+                $stream->rewind();
+                file_put_contents($tmpPath, $stream->getContents());
+            }
+
+            try {
+                $meta = $media->store($clientFilename, $tmpPath, $currentUsername);
+            } catch (\Throwable $e) {
+                continue; // skip failed store
+            }
+
+            $dto = (new FileMetadataDto())
+                ->setId((string)$meta['id'])
+                ->setFileName((string)$meta['filename'])
+                ->setFileType(Serializer::inferFileTypeFromMime((string)$meta['mime']))
+                ->setSize((int)$meta['size'])
+                ->setUploadedBy($currentUsername)
+                ->setUploadedAt(new \DateTime('now'));
+
+            $items[] = Serializer::fileMetadataToArray($dto);
         }
 
-        // Map to shared FileMetadata DTO
-        $fileMetadataDto = (new FileMetadataDto())
-            ->setId((string)$meta['id'])
-            ->setFileName((string)$meta['filename'])
-            ->setFileType(Serializer::inferFileTypeFromMime((string)$meta['mime']))
-            ->setSize((int)$meta['size'])
-            ->setUploadedBy($currentUsername)
-            ->setUploadedAt(new \DateTime('now'));
-
-        // Create the proper response structure
-        $responseDto = (new MediaUploadPostResponse201())
-            ->setData($fileMetadataDto);
-
-        $response->getBody()->write(json_encode(['data' => Serializer::fileMetadataToArray($responseDto->getData())]));
+        $response->getBody()->write(json_encode(['data' => $items]));
         return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
     })->add(new AuthMiddleware());
 

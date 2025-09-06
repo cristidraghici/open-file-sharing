@@ -3,7 +3,6 @@ import { MediaGallery } from "../components/MediaGallery";
 import { UploadForm } from "../components/UploadForm";
 import { useAuth } from "../context/AuthContext";
 import type {
-  FileMetadata,
   ListMediaParams,
   MediaListResponseWithMeta,
 } from "../services/media";
@@ -47,7 +46,7 @@ export const HomePage: React.FC = () => {
     void loadMedia(1, filterType);
   }, [filterType, perPage]);
 
-  const handleUploaded = (meta: FileMetadata) => {
+  const handleUploaded = () => {
     // Refresh the current page to show the new upload
     void loadMedia(currentPage, filterType);
   };

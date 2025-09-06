@@ -7,9 +7,9 @@ class PostMediaUpload extends \OpenFileSharing\Dto\Runtime\Client\BaseEndpoint i
     /**
      * 
      *
-     * @param \OpenFileSharing\Dto\Model\MediaUploadPostBody $requestBody 
+     * @param \OpenFileSharing\Dto\Model\MediaUploadsPostBody $requestBody 
      */
-    public function __construct(\OpenFileSharing\Dto\Model\MediaUploadPostBody $requestBody)
+    public function __construct(\OpenFileSharing\Dto\Model\MediaUploadsPostBody $requestBody)
     {
         $this->body = $requestBody;
     }
@@ -20,11 +20,11 @@ class PostMediaUpload extends \OpenFileSharing\Dto\Runtime\Client\BaseEndpoint i
     }
     public function getUri(): string
     {
-        return '/media/upload';
+        return '/media/uploads';
     }
     public function getBody(\Symfony\Component\Serializer\SerializerInterface $serializer, $streamFactory = null): array
     {
-        if ($this->body instanceof \OpenFileSharing\Dto\Model\MediaUploadPostBody) {
+        if ($this->body instanceof \OpenFileSharing\Dto\Model\MediaUploadsPostBody) {
             $bodyBuilder = new \Http\Message\MultipartStream\MultipartStreamBuilder($streamFactory);
             $formParameters = $serializer->normalize($this->body, 'json');
             foreach ($formParameters as $key => $value) {
@@ -43,22 +43,18 @@ class PostMediaUpload extends \OpenFileSharing\Dto\Runtime\Client\BaseEndpoint i
      * {@inheritdoc}
      *
      * @throws \OpenFileSharing\Dto\Exception\PostMediaUploadBadRequestException
-     * @throws \OpenFileSharing\Dto\Exception\PostMediaUploadRequestEntityTooLargeException
      *
-     * @return null|\OpenFileSharing\Dto\Model\MediaUploadPostResponse201
+     * @return null|\OpenFileSharing\Dto\Model\MediaUploadsPostResponse201
      */
     protected function transformResponseBody(\Psr\Http\Message\ResponseInterface $response, \Symfony\Component\Serializer\SerializerInterface $serializer, ?string $contentType = null)
     {
         $status = $response->getStatusCode();
         $body = (string) $response->getBody();
         if (is_null($contentType) === false && (201 === $status && mb_strpos($contentType, 'application/json') !== false)) {
-            return $serializer->deserialize($body, 'OpenFileSharing\Dto\Model\MediaUploadPostResponse201', 'json');
+            return $serializer->deserialize($body, 'OpenFileSharing\Dto\Model\MediaUploadsPostResponse201', 'json');
         }
         if (is_null($contentType) === false && (400 === $status && mb_strpos($contentType, 'application/json') !== false)) {
             throw new \OpenFileSharing\Dto\Exception\PostMediaUploadBadRequestException($serializer->deserialize($body, 'OpenFileSharing\Dto\Model\Error', 'json'), $response);
-        }
-        if (is_null($contentType) === false && (413 === $status && mb_strpos($contentType, 'application/json') !== false)) {
-            throw new \OpenFileSharing\Dto\Exception\PostMediaUploadRequestEntityTooLargeException($serializer->deserialize($body, 'OpenFileSharing\Dto\Model\Error', 'json'), $response);
         }
     }
     public function getAuthenticationScopes(): array

@@ -2,7 +2,7 @@
 
 namespace OpenFileSharing\Dto\Model;
 
-class MediaUploadPostResponse201 extends \ArrayObject
+class MediaUploadsPostBody extends \ArrayObject
 {
     /**
      * @var array
@@ -15,29 +15,29 @@ class MediaUploadPostResponse201 extends \ArrayObject
     /**
      * 
      *
-     * @var FileMetadata
+     * @var list<string>
      */
-    protected $data;
+    protected $files;
     /**
      * 
      *
-     * @return FileMetadata
+     * @return list<string>
      */
-    public function getData(): FileMetadata
+    public function getFiles(): array
     {
-        return $this->data;
+        return $this->files;
     }
     /**
      * 
      *
-     * @param FileMetadata $data
+     * @param list<string> $files
      *
      * @return self
      */
-    public function setData(FileMetadata $data): self
+    public function setFiles(array $files): self
     {
-        $this->initialized['data'] = true;
-        $this->data = $data;
+        $this->initialized['files'] = true;
+        $this->files = $files;
         return $this;
     }
 }

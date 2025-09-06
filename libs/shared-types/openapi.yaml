@@ -193,11 +193,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /media/upload:
+
+  /media/uploads:
     post:
       tags:
         - Media
-      summary: Upload a new file
+      summary: Upload multiple files
       requestBody:
         required: true
         content:
@@ -205,29 +206,25 @@ paths:
             schema:
               type: object
               properties:
-                file:
-                  type: string
-                  format: binary
-                metadata:
-                  $ref: "#/components/schemas/UploadRequest"
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         "201":
-          description: File uploaded successfully
+          description: Files uploaded successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/FileMetadata"
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FileMetadata"
         "400":
           description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "413":
-          description: File too large
           content:
             application/json:
               schema:

@@ -33,7 +33,7 @@ api.interceptors.response.use(
 export const endpoints = {
   login: "/auth/login",
   me: "/auth/me",
-  mediaUpload: "/api/media/upload",
+  mediaUploadMultiple: "/api/media/uploads",
   mediaList: "/api/media",
   mediaById: (id: string) => `/api/media/${id}`,
   mediaContentById: (id: string) => `/api/media/${id}/content`,

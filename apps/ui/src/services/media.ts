@@ -10,15 +10,18 @@ export type MediaListResponseWithMeta = {
   links: components["schemas"]["Links"];
 };
 
-export async function uploadMedia(
-  file: File,
-  onUploadProgress?: (pct: number) => void
-): Promise<FileMetadata> {
-  const form = new FormData();
-  form.append("file", file);
 
-  const { data } = await api.post<{ data: FileMetadata }>(
-    endpoints.mediaUpload,
+export async function uploadMediaMultiple(
+  files: File[],
+  onUploadProgress?: (pct: number) => void
+): Promise<FileMetadata[]> {
+  const form = new FormData();
+  for (const f of files) {
+    form.append("files[]", f);
+  }
+
+  const { data } = await api.post<{ data: FileMetadata[] }>(
+    endpoints.mediaUploadMultiple,
     form,
     {
       headers: { "Content-Type": "multipart/form-data" },
@@ -30,7 +33,7 @@ export async function uploadMedia(
     }
   );
 
-  return data?.data as FileMetadata;
+  return (data?.data as FileMetadata[]) ?? [];
 }
 
 export function mediaUrl(id: string) {

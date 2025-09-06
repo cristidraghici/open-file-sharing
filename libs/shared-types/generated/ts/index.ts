@@ -50,35 +50,27 @@ export interface paths {
       };
     };
   };
-  "/media/upload": {
-    /** Upload a new file */
+  "/media/uploads": {
+    /** Upload multiple files */
     post: {
       requestBody: {
         content: {
           "multipart/form-data": {
-            /** Format: binary */
-            file?: string;
-            metadata?: components["schemas"]["UploadRequest"];
+            files?: string[];
           };
         };
       };
       responses: {
-        /** @description File uploaded successfully */
+        /** @description Files uploaded successfully */
         201: {
           content: {
             "application/json": {
-              data?: components["schemas"]["FileMetadata"];
+              data?: components["schemas"]["FileMetadata"][];
             };
           };
         };
         /** @description Invalid request */
         400: {
-          content: {
-            "application/json": components["schemas"]["Error"];
-          };
-        };
-        /** @description File too large */
-        413: {
           content: {
             "application/json": components["schemas"]["Error"];
           };

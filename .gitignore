@@ -22,6 +22,7 @@ vendor/
 *.sublime-workspace
 .vscode/
 .history/*
+WARP.md
 
 # System files
 .DS_Store

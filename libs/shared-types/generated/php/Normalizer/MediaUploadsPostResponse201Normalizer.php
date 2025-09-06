@@ -11,7 +11,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-class MediaUploadPostResponse201Normalizer implements DenormalizerInterface, NormalizerInterface, DenormalizerAwareInterface, NormalizerAwareInterface
+class MediaUploadsPostResponse201Normalizer implements DenormalizerInterface, NormalizerInterface, DenormalizerAwareInterface, NormalizerAwareInterface
 {
     use DenormalizerAwareTrait;
     use NormalizerAwareTrait;
@@ -19,11 +19,11 @@ class MediaUploadPostResponse201Normalizer implements DenormalizerInterface, Nor
     use ValidatorTrait;
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
-        return $type === \OpenFileSharing\Dto\Model\MediaUploadPostResponse201::class;
+        return $type === \OpenFileSharing\Dto\Model\MediaUploadsPostResponse201::class;
     }
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return is_object($data) && get_class($data) === \OpenFileSharing\Dto\Model\MediaUploadPostResponse201::class;
+        return is_object($data) && get_class($data) === \OpenFileSharing\Dto\Model\MediaUploadsPostResponse201::class;
     }
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
@@ -33,17 +33,21 @@ class MediaUploadPostResponse201Normalizer implements DenormalizerInterface, Nor
         if (isset($data['$recursiveRef'])) {
             return new Reference($data['$recursiveRef'], $context['document-origin']);
         }
-        $object = new \OpenFileSharing\Dto\Model\MediaUploadPostResponse201();
+        $object = new \OpenFileSharing\Dto\Model\MediaUploadsPostResponse201();
         if (null === $data || false === \is_array($data)) {
             return $object;
         }
         if (\array_key_exists('data', $data)) {
-            $object->setData($this->denormalizer->denormalize($data['data'], \OpenFileSharing\Dto\Model\FileMetadata::class, 'json', $context));
+            $values = [];
+            foreach ($data['data'] as $value) {
+                $values[] = $this->denormalizer->denormalize($value, \OpenFileSharing\Dto\Model\FileMetadata::class, 'json', $context);
+            }
+            $object->setData($values);
             unset($data['data']);
         }
-        foreach ($data as $key => $value) {
+        foreach ($data as $key => $value_1) {
             if (preg_match('/.*/', (string) $key)) {
-                $object[$key] = $value;
+                $object[$key] = $value_1;
             }
         }
         return $object;
@@ -52,17 +56,21 @@ class MediaUploadPostResponse201Normalizer implements DenormalizerInterface, Nor
     {
         $dataArray = [];
         if ($data->isInitialized('data') && null !== $data->getData()) {
-            $dataArray['data'] = $this->normalizer->normalize($data->getData(), 'json', $context);
+            $values = [];
+            foreach ($data->getData() as $value) {
+                $values[] = $this->normalizer->normalize($value, 'json', $context);
+            }
+            $dataArray['data'] = $values;
         }
-        foreach ($data as $key => $value) {
+        foreach ($data as $key => $value_1) {
             if (preg_match('/.*/', (string) $key)) {
-                $dataArray[$key] = $value;
+                $dataArray[$key] = $value_1;
             }
         }
         return $dataArray;
     }
     public function getSupportedTypes(?string $format = null): array
     {
-        return [\OpenFileSharing\Dto\Model\MediaUploadPostResponse201::class => false];
+        return [\OpenFileSharing\Dto\Model\MediaUploadsPostResponse201::class => false];
     }
 }

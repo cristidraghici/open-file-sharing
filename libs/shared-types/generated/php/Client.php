@@ -30,14 +30,13 @@ class Client extends \OpenFileSharing\Dto\Runtime\Client\Client
     /**
      * 
      *
-     * @param \OpenFileSharing\Dto\Model\MediaUploadPostBody $requestBody 
+     * @param \OpenFileSharing\Dto\Model\MediaUploadsPostBody $requestBody 
      * @param string $fetch Fetch mode to use (can be OBJECT or RESPONSE)
      * @throws \OpenFileSharing\Dto\Exception\PostMediaUploadBadRequestException
-     * @throws \OpenFileSharing\Dto\Exception\PostMediaUploadRequestEntityTooLargeException
      *
-     * @return null|\OpenFileSharing\Dto\Model\MediaUploadPostResponse201|\Psr\Http\Message\ResponseInterface
+     * @return null|\OpenFileSharing\Dto\Model\MediaUploadsPostResponse201|\Psr\Http\Message\ResponseInterface
      */
-    public function postMediaUpload(\OpenFileSharing\Dto\Model\MediaUploadPostBody $requestBody, string $fetch = self::FETCH_OBJECT)
+    public function postMediaUpload(\OpenFileSharing\Dto\Model\MediaUploadsPostBody $requestBody, string $fetch = self::FETCH_OBJECT)
     {
         return $this->executeEndpoint(new \OpenFileSharing\Dto\Endpoint\PostMediaUpload($requestBody), $fetch);
     }
