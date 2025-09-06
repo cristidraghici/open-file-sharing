@@ -15,7 +15,6 @@ use OpenFileSharing\Dto\Model\AuthResponse;
 use App\Util\Serializer;
 use OpenFileSharing\Dto\Model\FileMetadata as FileMetadataDto;
 use OpenFileSharing\Dto\Model\MediaListGetResponse200;
-use OpenFileSharing\Dto\Model\MediaUploadPostResponse201;
 use OpenFileSharing\Dto\Model\MediaIdGetResponse200;
 use OpenFileSharing\Dto\Model\PaginationMeta;
 use OpenFileSharing\Dto\Model\Links;
@@ -66,7 +65,7 @@ return function (Slim\App $app) {
         $currentUsername = $auth['username'] ?? 'unknown';
 
         $media = new MediaService();
-        $items = [];
+        $fileDTOs = [];
 
         foreach ($files as $file) {
             if ($file->getError() !== UPLOAD_ERR_OK) {
@@ -102,10 +101,13 @@ return function (Slim\App $app) {
                 ->setUploadedBy($currentUsername)
                 ->setUploadedAt(new \DateTime('now'));
 
-            $items[] = Serializer::fileMetadataToArray($dto);
+            $fileDTOs[] = $dto;
         }
 
-        $response->getBody()->write(json_encode(['data' => $items]));
+        // Serialize using shared serializer to avoid hard dependency on DTO availability at runtime
+        $response->getBody()->write(json_encode([
+            'data' => Serializer::fileMetadataListToArray($fileDTOs),
+        ]));
         return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
     })->add(new AuthMiddleware());
 
@@ -226,7 +228,7 @@ return function (Slim\App $app) {
         $page = max(1, (int)($queryParams['page'] ?? 1));
         $perPage = max(1, min(100, (int)($queryParams['per_page'] ?? 20))); // Limit to 100 items per page
         $type = $queryParams['type'] ?? null;
-        
+
         // Validate type parameter
         if ($type !== null && !in_array($type, ['image', 'video', 'document', 'other'], true)) {
             $response->getBody()->write(json_encode([
@@ -262,7 +264,7 @@ return function (Slim\App $app) {
         // Create pagination metadata
         $total = $result['total'];
         $totalPages = (int)ceil($total / $perPage);
-        
+
         $paginationMeta = (new PaginationMeta())
             ->setPage($page)
             ->setPerPage($perPage)
@@ -275,7 +277,7 @@ return function (Slim\App $app) {
             'type' => $type,
         ]));
         $urlSuffix = $queryString ? '?' . $queryString : '';
-        
+
         $links = (new Links())
             ->setFirst($baseUrl . ($queryString ? '?' . $queryString . '&page=1' : '?page=1'))
             ->setLast($baseUrl . ($queryString ? '?' . $queryString . '&page=' . $totalPages : '?page=' . $totalPages))

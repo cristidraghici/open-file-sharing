@@ -1,15 +1,11 @@
-import type { components } from "@open-file-sharing/shared-types";
+import type { components, paths } from "@open-file-sharing/shared-types";
 import { api, API_BASE_URL, endpoints } from "./api";
 
 // Shared type aliases
 export type FileMetadata = components["schemas"]["FileMetadata"];
 export type MediaListResponse = components["schemas"]["FileMetadata"][];
-export type MediaListResponseWithMeta = {
-  data: components["schemas"]["FileMetadata"][];
-  meta: components["schemas"]["PaginationMeta"];
-  links: components["schemas"]["Links"];
-};
-
+export type MediaListResponseWithMeta = paths["/media/list"]["get"]["responses"][200]["content"]["application/json"];
+export type ListMediaParams = paths["/media/list"]["get"]["parameters"]["query"];
 
 export async function uploadMediaMultiple(
   files: File[],
@@ -38,12 +34,6 @@ export async function uploadMediaMultiple(
 
 export function mediaUrl(id: string) {
   return `${API_BASE_URL}${endpoints.mediaContentById(id)}`;
-}
-
-export interface ListMediaParams {
-  page?: number;
-  per_page?: number;
-  type?: "image" | "video" | "document" | "other";
 }
 
 export async function listMedia(

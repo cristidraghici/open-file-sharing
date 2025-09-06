@@ -7,11 +7,11 @@ import React, {
   useState,
 } from "react";
 import { api, endpoints } from "../services/api";
-import type { components } from "../../../../libs/shared-types/generated/ts";
+import type { components, paths } from "@open-file-sharing/shared-types";
 
 type User = NonNullable<components["schemas"]["User"]>;
 type LoginRequest = components["schemas"]["LoginRequest"];
-type AuthResponse = components["schemas"]["AuthResponse"];
+type LoginSuccessResponse = paths["/auth/login"]["post"]["responses"][200]["content"]["application/json"];
 
 interface AuthState {
   user: User | null;
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = useCallback(async (username: string, password: string) => {
     const payload: LoginRequest = { username, password };
-    const { data } = await api.post<AuthResponse>(endpoints.login, payload);
+    const { data } = await api.post<LoginSuccessResponse>(endpoints.login, payload);
     const token: string = (data as any)?.data?.token;
     const user: User = (data as any)?.data?.user as User;
     if (token) localStorage.setItem("ofs_token", token);
@@ -61,7 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const refreshMe = useCallback(async () => {
     try {
-      const { data } = await api.get<{ data: User }>(endpoints.me);
+      type MeResponse = paths["/auth/me"]["get"]["responses"][200]["content"]["application/json"];
+      const { data } = await api.get<MeResponse>(endpoints.me);
       const user: User = (data as any)?.data as User;
       if (user) {
         localStorage.setItem("ofs_user", JSON.stringify(user));
