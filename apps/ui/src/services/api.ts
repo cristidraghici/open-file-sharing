@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getErrorMessage, toastService } from "./toast";
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -22,10 +23,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (resp) => resp,
   (error) => {
-    if (error?.response?.status === 401) {
-      // Optionally handle token expiry
-      // localStorage.removeItem('ofs_token');
-    }
+    const message = getErrorMessage(error);
+
+    toastService.error(message);
+
+    // if (error?.response?.status === 401) {
+    //   // Optionally handle token expiry
+    //   localStorage.removeItem('ofs_token');
+    // }
+
     return Promise.reject(error);
   }
 );

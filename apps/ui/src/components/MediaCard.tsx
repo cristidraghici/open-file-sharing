@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { deleteMediaById, FileMetadata, mediaUrl } from "../services/media";
+import { toastService } from "../services/toast";
 
 interface Props {
   media: FileMetadata;
@@ -38,9 +39,10 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
       await deleteMediaById(id);
       onDelete?.(id);
       setShowConfirmDelete(false);
+      toastService.success(`Successfully deleted ${name}`);
     } catch (error) {
       console.error("Failed to delete file:", error);
-      alert("Failed to delete file. Please try again.");
+      // Error toast is handled by API interceptor
     } finally {
       setIsDeleting(false);
     }
