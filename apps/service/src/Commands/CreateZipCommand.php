@@ -9,12 +9,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use App\Services\MediaService;
-use App\Util\Configuration;
-use App\Util\Storage;
 
-class CreateZipCommand extends Command
+class CreateZipCommand extends BaseCommand
 {
     private string $uploadsDir;
     private MediaService $mediaService;
@@ -24,11 +21,10 @@ class CreateZipCommand extends Command
 
     public function __construct(?string $uploadsDir = null)
     {
-        $config = Configuration::load();
-        $this->uploadsDir = $uploadsDir ?? Storage::uploadsDir($config);
-        $this->mediaService = new MediaService($this->uploadsDir);
-
         parent::__construct();
+        
+        $this->uploadsDir = $uploadsDir ?? $this->getUploadsDirectory();
+        $this->mediaService = new MediaService($this->uploadsDir);
     }
 
     protected function configure(): void
@@ -75,8 +71,6 @@ Examples:
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
-
         $outputName = $input->getArgument('output') ?? 'media-files';
         $type = $input->getOption('type');
         $extensions = $input->getOption('extensions');
@@ -86,15 +80,11 @@ Examples:
         $noDate = $input->getOption('no-date');
 
         // Create the zips directory in .data folder
-        $config = Configuration::load();
-        $dataDir = Storage::basePath($config);
+        $dataDir = $this->getDataDirectory();
         $zipsDir = $dataDir . DIRECTORY_SEPARATOR . 'zips';
 
-        if (!is_dir($zipsDir)) {
-            if (!mkdir($zipsDir, 0755, true)) {
-                $io->error(sprintf('Cannot create zips directory: %s', $zipsDir));
-                return Command::FAILURE;
-            }
+        if (!$this->ensureDirectoryExists($zipsDir)) {
+            return Command::FAILURE;
         }
 
         // Generate filename with date
@@ -102,22 +92,14 @@ Examples:
         $outputPath = $zipsDir . DIRECTORY_SEPARATOR . $outputName . $dateSuffix . '.zip';
 
         // Validate type parameter
-        if ($type !== null && !in_array($type, ['image', 'video', 'document', 'other'], true)) {
-            $io->error('Invalid type parameter. Must be one of: image, video, document, other');
-            return Command::FAILURE;
+        if (!$this->isValidFileType($type)) {
+            return $this->displayError('Invalid type parameter. Must be one of: image, video, document, other');
         }
 
         // Parse extensions if provided
-        $extensionList = null;
-        if ($extensions !== null) {
-            $extensionList = array_map('trim', explode(',', $extensions));
-            $extensionList = array_filter($extensionList, function ($ext) {
-                return !empty($ext);
-            });
-            if (empty($extensionList)) {
-                $io->error('No valid extensions provided');
-                return Command::FAILURE;
-            }
+        $extensionList = $this->parseExtensions($extensions);
+        if ($extensions !== null && $extensionList === null) {
+            return $this->displayError('No valid extensions provided');
         }
 
         // Get all media files
@@ -127,19 +109,18 @@ Examples:
         $filteredFiles = $this->filterFiles($allFiles, $type, $extensionList, $user);
 
         if (empty($filteredFiles)) {
-            $io->warning('No files found matching the specified criteria');
+            $this->displayWarning('No files found matching the specified criteria');
             return Command::SUCCESS;
         }
 
-        $io->info(sprintf('Found %d files to include in zip', count($filteredFiles)));
+        $this->displayInfo(sprintf('Found %d files to include in zip', count($filteredFiles)));
 
         // Create zip file
         $zip = new \ZipArchive();
         $result = $zip->open($outputPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
         if ($result !== true) {
-            $io->error(sprintf('Cannot create zip file: %s (Error code: %d)', $outputPath, $result));
-            return Command::FAILURE;
+            return $this->displayError(sprintf('Cannot create zip file: %s (Error code: %d)', $outputPath, $result));
         }
 
         $addedFiles = 0;
@@ -167,7 +148,7 @@ Examples:
             // Add file to zip
             if ($zip->addFile($actualFilePath, $zipPath)) {
                 $addedFiles++;
-                $io->writeln(sprintf('Added: %s', $originalFilename));
+                $this->io->writeln(sprintf('Added: %s', $originalFilename));
             } else {
                 $errors[] = sprintf('Failed to add file: %s', $originalFilename);
             }
@@ -181,7 +162,7 @@ Examples:
                         'metadata' . DIRECTORY_SEPARATOR . $file['id'] . '.json';
 
                     if ($zip->addFile($metadataPath, $metadataZipPath)) {
-                        $io->writeln(sprintf('Added metadata: %s', $file['id'] . '.json'));
+                        $this->io->writeln(sprintf('Added metadata: %s', $file['id'] . '.json'));
                     }
                 }
             }
@@ -190,24 +171,23 @@ Examples:
         $zip->close();
 
         if (!empty($errors)) {
-            $io->warning(sprintf('Encountered %d errors:', count($errors)));
+            $this->displayWarning(sprintf('Encountered %d errors:', count($errors)));
             foreach ($errors as $error) {
-                $io->writeln(sprintf('  - %s', $error));
+                $this->io->writeln(sprintf('  - %s', $error));
             }
         }
 
         if ($addedFiles > 0) {
             $fileSize = filesize($outputPath);
             $relativePath = '.data/zips/' . basename($outputPath);
-            $io->success(sprintf(
+            $this->displaySuccess(sprintf(
                 'Successfully created zip file: %s (%d files, %s)',
                 $relativePath,
                 $addedFiles,
                 $this->formatBytes($fileSize)
             ));
         } else {
-            $io->error('No files were added to the zip');
-            return Command::FAILURE;
+            return $this->displayError('No files were added to the zip');
         }
 
         return Command::SUCCESS;
@@ -288,16 +268,4 @@ Examples:
         }
     }
 
-    /**
-     * Format bytes into human readable format
-     */
-    private function formatBytes(int $bytes): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
-        $bytes /= (1 << (10 * $pow));
-        return round($bytes, 2) . ' ' . $units[$pow];
-    }
 }

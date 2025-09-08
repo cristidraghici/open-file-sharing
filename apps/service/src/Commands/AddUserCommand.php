@@ -10,35 +10,13 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use OpenFileSharing\Dto\Model\User as UserDto;
 use App\Util\Serializer;
-use App\Util\Storage;
-use App\Util\Configuration;
 
-class AddUserCommand extends Command
+class AddUserCommand extends BaseCommand
 {
-    private string $usersFile;
-
     protected static $defaultName = 'user:add';
     protected static $defaultDescription = 'Add a new user to the system';
-
-    public function __construct(string $usersFile = null)
-    {
-        // Resolve users.csv path using Storage utility with optional config
-        $config = Configuration::load();
-        $this->usersFile = Storage::usersCsv($config);
-
-        // Ensure the directory exists
-        $dir = dirname($this->usersFile);
-        if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true)) {
-                throw new \RuntimeException(sprintf('Could not create directory "%s"', $dir));
-            }
-        }
-
-        parent::__construct();
-    }
 
     protected function configure(): void
     {
@@ -47,12 +25,11 @@ class AddUserCommand extends Command
             ->addArgument('username', InputArgument::OPTIONAL, 'The username of the user')
             ->addArgument('password', InputArgument::OPTIONAL, 'The password of the user')
             ->addArgument('role', InputArgument::OPTIONAL, 'The role of the user', 'user')
-            ->addOption('file', 'f', InputOption::VALUE_OPTIONAL, 'Path to the users CSV file', $this->usersFile);
+            ->addOption('file', 'f', InputOption::VALUE_OPTIONAL, 'Path to the users CSV file', $this->getUsersFilePath());
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
         $helper = $this->getHelper('question');
 
         // Get username
@@ -63,9 +40,8 @@ class AddUserCommand extends Command
         }
 
         // Validate username
-        if (!preg_match('/^[a-zA-Z0-9]+$/', $username)) {
-            $io->error('Username must contain only alphanumeric characters');
-            return Command::FAILURE;
+        if (!$this->isValidUsername($username)) {
+            return $this->displayError('Username must contain only alphanumeric characters');
         }
 
         // Get password
@@ -77,8 +53,7 @@ class AddUserCommand extends Command
             $password = $helper->ask($input, $output, $question);
 
             if (empty($password)) {
-                $io->error('Password cannot be empty');
-                return Command::FAILURE;
+                return $this->displayError('Password cannot be empty');
             }
 
             // Confirm password
@@ -88,16 +63,14 @@ class AddUserCommand extends Command
             $confirmPassword = $helper->ask($input, $output, $question);
 
             if ($password !== $confirmPassword) {
-                $io->error('Passwords do not match');
-                return Command::FAILURE;
+                return $this->displayError('Passwords do not match');
             }
         }
 
         // Get role
         $role = strtolower($input->getArgument('role'));
-        if (!in_array($role, ['admin', 'user'], true)) {
-            $io->error('Role must be either "admin" or "user"');
-            return Command::FAILURE;
+        if (!$this->isValidRole($role)) {
+            return $this->displayError('Role must be either "admin" or "user"');
         }
 
         // Get the users file path from options
@@ -105,31 +78,13 @@ class AddUserCommand extends Command
 
         // Create users directory if it doesn't exist
         $usersDir = dirname($usersFile);
-        if (!is_dir($usersDir)) {
-            if (!mkdir($usersDir, 0755, true) && !is_dir($usersDir)) {
-                $io->error(sprintf('Directory "%s" was not created', $usersDir));
-                return Command::FAILURE;
-            }
+        if (!$this->ensureDirectoryExists($usersDir)) {
+            return Command::FAILURE;
         }
 
         // Check if user already exists
-        if (file_exists($usersFile)) {
-            if (($handle = fopen($usersFile, 'rb')) !== false) {
-                // Skip BOM if exists
-                $bom = fread($handle, 3);
-                if ($bom !== "\xEF\xBB\xBF") {
-                    rewind($handle);
-                }
-
-                while (($data = fgetcsv($handle)) !== false) {
-                    if (isset($data[0]) && $data[0] === $username) {
-                        fclose($handle);
-                        $io->error(sprintf('User "%s" already exists', $username));
-                        return Command::FAILURE;
-                    }
-                }
-                fclose($handle);
-            }
+        if ($this->userExists($username, $usersFile)) {
+            return $this->displayError(sprintf('User "%s" already exists', $username));
         }
 
         // Hash the password (using password_hash with PASSWORD_DEFAULT)
@@ -145,23 +100,24 @@ class AddUserCommand extends Command
         $userData = Serializer::userToCsvRow($userDto, $hashedPassword);
 
         $fileExists = file_exists($usersFile);
-        $file = fopen($usersFile, 'ab');
+        $file = $this->openCsvForWriting($usersFile, true);
 
         if ($file === false) {
-            $io->error(sprintf('Cannot open file "%s" for writing', $usersFile));
-            return Command::FAILURE;
+            return $this->displayError(sprintf('Cannot open file "%s" for writing', $usersFile));
         }
 
-        // Add UTF-8 BOM for Excel compatibility if file is new
+        // Add UTF-8 BOM for Excel compatibility if file is new (handled by openCsvForWriting)
         if (!$fileExists) {
-            fwrite($file, "\xEF\xBB\xBF");
+            // BOM already handled by openCsvForWriting method
         }
 
         fputcsv($file, $userData);
         fclose($file);
 
-        $io->success(sprintf('User "%s" has been successfully created with role "%s"', $userDto->getUsername(), $role));
-        $io->note(sprintf('User data stored in: %s', $usersFile));
+        $this->displaySuccess(
+            sprintf('User "%s" has been successfully created with role "%s"', $userDto->getUsername(), $role),
+            sprintf('User data stored in: %s', $usersFile)
+        );
 
         return Command::SUCCESS;
     }
