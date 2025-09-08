@@ -8,6 +8,7 @@ use App\Services\AuthService;
 use App\Services\TokenService;
 use App\Services\MediaService;
 use App\Middleware\AuthMiddleware;
+use App\Middleware\AdminMiddleware;
 use OpenFileSharing\Dto\Model\LoginRequest;
 use OpenFileSharing\Dto\Model\User as UserDto;
 use OpenFileSharing\Dto\Model\AuthResponseData;
@@ -306,6 +307,49 @@ return function (Slim\App $app) {
         ]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     })->add(new AuthMiddleware());
+
+    // Media: Delete by id (admin only)
+    $app->delete('/api/media/{id}', function (Request $request, Response $response, array $args) {
+        $id = (string)($args['id'] ?? '');
+        if ($id === '') {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Missing media id',
+                ]
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $media = new MediaService();
+        
+        // Check if file exists first
+        $file = $media->findById($id);
+        if ($file === null) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'File not found',
+                ]
+            ]));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+        
+        // Attempt to delete the file
+        $deleted = $media->deleteById($id);
+        if (!$deleted) {
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 'SERVER_ERROR',
+                    'message' => 'Failed to delete file',
+                ]
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+        
+        // Return 204 No Content on successful deletion
+        return $response->withStatus(204);
+    })->add(new AdminMiddleware())->add(new AuthMiddleware());
 
     // Main route
     $app->get('/', function (Request $request, Response $response) {

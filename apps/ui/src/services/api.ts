@@ -37,4 +37,5 @@ export const endpoints = {
   mediaList: "/api/media",
   mediaById: (id: string) => `/api/media/${id}`,
   mediaContentById: (id: string) => `/api/media/${id}/content`,
+  mediaDeleteById: (id: string) => `/api/media/${id}`,
 };

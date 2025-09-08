@@ -14,9 +14,10 @@ interface Props {
   items: FileMetadata[];
   loading?: boolean;
   pagination?: PaginationProps;
+  onDelete?: (id: string) => void;
 }
 
-export const MediaGallery: React.FC<Props> = ({ items, loading = false, pagination }) => {
+export const MediaGallery: React.FC<Props> = ({ items, loading = false, pagination, onDelete }) => {
   if (loading && !items.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 sm:py-16">
@@ -152,7 +153,7 @@ export const MediaGallery: React.FC<Props> = ({ items, loading = false, paginati
         {/* Grid with responsive layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {items.map((m) => (
-            <MediaCard key={m.id} media={m} />
+            <MediaCard key={m.id} media={m} onDelete={onDelete} />
           ))}
         </div>
         

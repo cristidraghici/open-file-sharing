@@ -65,6 +65,23 @@ export const HomePage: React.FC = () => {
     setPerPage(newPerPage);
     setCurrentPage(1);
   };
+  
+  const handleDelete = (deletedId: string) => {
+    // Remove the deleted item from the current data to provide immediate feedback
+    if (mediaData) {
+      const updatedItems = mediaData.data?.filter(item => item.id !== deletedId) ?? [];
+      setMediaData({
+        ...mediaData,
+        data: updatedItems,
+        meta: {
+          ...mediaData.meta,
+          total: (mediaData.meta?.total ?? 1) - 1,
+        },
+      });
+    }
+    // Refresh the data to ensure consistency
+    void loadMedia(currentPage, filterType);
+  };
 
   return (
     <div className="min-h-screen safe-area-padding">
@@ -218,6 +235,7 @@ export const HomePage: React.FC = () => {
           <MediaGallery
             items={mediaData?.data ?? []}
             loading={loading}
+            onDelete={handleDelete}
             pagination={
               mediaData
                 ? {

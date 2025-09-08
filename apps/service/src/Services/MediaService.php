@@ -310,4 +310,32 @@ final class MediaService
 
         return $mimeMap[$extension] ?? 'application/octet-stream';
     }
+
+    /**
+     * Delete a file and its metadata by ID.
+     * @param string $id The file ID to delete
+     * @return bool True if the file was successfully deleted, false if file not found
+     */
+    public function deleteById(string $id): bool
+    {
+        $file = $this->findById($id);
+        if ($file === null) {
+            return false;
+        }
+
+        $deleted = false;
+        
+        // Delete the actual file
+        if (is_file($file['path'])) {
+            $deleted = @unlink($file['path']);
+        }
+        
+        // Delete the metadata file if it exists
+        $metaPath = $this->uploadsDir . DIRECTORY_SEPARATOR . $id . '.json';
+        if (is_file($metaPath)) {
+            @unlink($metaPath);
+        }
+        
+        return $deleted;
+    }
 }

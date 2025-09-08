@@ -52,3 +52,7 @@ export async function getMediaById(id: string): Promise<FileMetadata> {
   );
   return data?.data as FileMetadata;
 }
+
+export async function deleteMediaById(id: string): Promise<void> {
+  await api.delete(endpoints.mediaDeleteById(id));
+}
