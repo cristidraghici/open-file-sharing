@@ -14,25 +14,143 @@ body,
 }
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-gray-50 text-gray-900 antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container-app {
   @apply min-h-screen flex flex-col;
 }
 
+/* Button Styles - Mobile First */
 .btn {
-  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors;
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-button;
+}
+
+.btn:active {
+  @apply scale-95;
 }
 
 .btn-primary {
-  @apply bg-brand-600 text-white hover:bg-brand-700 focus:ring-4 focus:ring-brand-200;
+  @apply bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500;
 }
 
+.btn-secondary {
+  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-brand-500;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500 shadow-none;
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 640px) {
+  .btn {
+    @apply px-6 py-3 min-h-[44px] text-base;
+  }
+}
+
+/* Form Input Styles - Mobile First */
 .input {
-  @apply w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
+  @apply w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base outline-none transition-all duration-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 focus:ring-opacity-50;
 }
 
+.input:focus {
+  @apply shadow-sm;
+}
+
+/* Better select styling */
+select.input {
+  @apply appearance-none bg-no-repeat bg-right pr-10;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-size: 1.25rem 1.25rem;
+}
+
+/* Card Styles - Mobile First */
 .card {
-  @apply bg-white rounded-lg shadow-card p-6;
+  @apply bg-white rounded-xl shadow-card border border-gray-100;
+}
+
+/* Mobile: smaller padding */
+.card {
+  @apply p-4;
+}
+
+/* Desktop: larger padding */
+@media (min-width: 640px) {
+  .card {
+    @apply p-6;
+  }
+}
+
+.card:hover {
+  @apply shadow-card-hover;
+}
+
+/* Typography Utilities */
+.heading-1 {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.heading-2 {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.heading-3 {
+  @apply text-lg font-medium text-gray-900;
+}
+
+.text-muted {
+  @apply text-gray-600;
+}
+
+.text-subtle {
+  @apply text-gray-500;
+}
+
+/* Mobile responsive headings */
+@media (min-width: 640px) {
+  .heading-1 {
+    @apply text-3xl;
+  }
+  
+  .heading-2 {
+    @apply text-2xl;
+  }
+  
+  .heading-3 {
+    @apply text-xl;
+  }
+}
+
+/* Loading and Animation Utilities */
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-gray-200 border-t-brand-600;
+}
+
+/* Safe area padding for mobile */
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Touch target improvements */
+@media (pointer: coarse) {
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Focus improvements for better accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }

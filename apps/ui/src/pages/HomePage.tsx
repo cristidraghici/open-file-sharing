@@ -18,6 +18,7 @@ export const HomePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [perPage, setPerPage] = useState<number>(12);
   const [filterType, setFilterType] = useState<string>("");
+  const [showUploadForm, setShowUploadForm] = useState<boolean>(false);
 
   const loadMedia = async (page: number = currentPage, type?: string) => {
     try {
@@ -66,51 +67,93 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b bg-white/70 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-brand-600" />
-            <span className="font-semibold">Open File Sharing</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user?.username}</span>
-            <button className="btn btn-primary" onClick={logout}>
-              Logout
-            </button>
+    <div className="min-h-screen safe-area-padding">
+      <header className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 shadow-sm flex items-center justify-center">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+              </div>
+              <span className="font-semibold text-gray-900 text-lg sm:text-xl">
+                Open File Sharing
+              </span>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="hidden sm:block text-sm text-gray-600 font-medium">
+                {user?.username}
+              </span>
+              <span className="sm:hidden text-xs text-gray-600 max-w-[80px] truncate">
+                {user?.username}
+              </span>
+
+              <button
+                className="btn btn-primary text-sm sm:text-base"
+                onClick={logout}
+              >
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 space-y-6">
-        <div className="card">
-          <h2 className="text-xl font-semibold">Upload a file</h2>
-          <p className="mt-2 text-gray-600">
-            Choose a file to upload. You will receive an id and a direct URL.
-          </p>
-          <div className="mt-4">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+        {showUploadForm && (
+          <div
+            className={`card transition-all duration-300 ease-in-out ${
+              showUploadForm
+                ? "animate-slide-up opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-4"
+            }`}
+          >
+            <div className="mb-4 sm:mb-6">
+              <h2 className="heading-2">Upload Files</h2>
+              <p className="mt-2 text-muted text-sm sm:text-base">
+                Drag and drop files or click to browse. Get instant sharing
+                links.
+              </p>
+            </div>
             <UploadForm onUploaded={handleUploaded} />
           </div>
-        </div>
+        )}
 
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Recent uploads</h2>
-            <button
-              className="btn btn-secondary"
-              onClick={() => loadMedia(currentPage, filterType)}
-              disabled={loading}
-            >
-              {loading ? "Loading..." : "Refresh"}
-            </button>
+        <div className="card animate-slide-up">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+            <h2 className="heading-2">Recent Uploads</h2>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+              <button
+                className="btn btn-secondary text-sm sm:text-base"
+                onClick={() => setShowUploadForm(!showUploadForm)}
+              >
+                Upload
+              </button>
+              <button
+                className="btn btn-secondary w-full sm:w-auto"
+                onClick={() => loadMedia(currentPage, filterType)}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="loading-spinner h-4 w-4 mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  "Refresh"
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Filter and pagination controls */}
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <label
                 htmlFor="type-filter"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 whitespace-nowrap"
               >
                 Filter by type:
               </label>
@@ -118,7 +161,7 @@ export const HomePage: React.FC = () => {
                 id="type-filter"
                 value={filterType}
                 onChange={(e) => handleTypeFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input text-sm sm:w-auto min-w-[140px]"
               >
                 <option value="">All types</option>
                 <option value="image">Images</option>
@@ -128,10 +171,10 @@ export const HomePage: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <label
                 htmlFor="per-page"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 whitespace-nowrap"
               >
                 Per page:
               </label>
@@ -139,7 +182,7 @@ export const HomePage: React.FC = () => {
                 id="per-page"
                 value={perPage}
                 onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input text-sm sm:w-auto min-w-[80px]"
               >
                 <option value={6}>6</option>
                 <option value={12}>12</option>
@@ -149,25 +192,46 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {error && <div className="mt-3 text-sm text-red-600">{error}</div>}
-          <div className="mt-4">
-            <MediaGallery
-              items={mediaData?.data ?? []}
-              pagination={
-                mediaData
-                  ? {
-                      currentPage,
-                      totalPages: Math.ceil(
-                        (mediaData.meta?.total ?? 0) / perPage
-                      ),
-                      onPageChange: handlePageChange,
-                      totalItems: mediaData.meta?.total ?? 0,
-                      itemsPerPage: perPage,
-                    }
-                  : undefined
-              }
-            />
-          </div>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <MediaGallery
+            items={mediaData?.data ?? []}
+            loading={loading}
+            pagination={
+              mediaData
+                ? {
+                    currentPage,
+                    totalPages: Math.ceil(
+                      (mediaData.meta?.total ?? 0) / perPage
+                    ),
+                    onPageChange: handlePageChange,
+                    totalItems: mediaData.meta?.total ?? 0,
+                    itemsPerPage: perPage,
+                  }
+                : undefined
+            }
+          />
         </div>
       </main>
     </div>

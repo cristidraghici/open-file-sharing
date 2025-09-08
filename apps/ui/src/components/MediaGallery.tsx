@@ -12,14 +12,32 @@ interface PaginationProps {
 
 interface Props {
   items: FileMetadata[];
+  loading?: boolean;
   pagination?: PaginationProps;
 }
 
-export const MediaGallery: React.FC<Props> = ({ items, pagination }) => {
+export const MediaGallery: React.FC<Props> = ({ items, loading = false, pagination }) => {
+  if (loading && !items.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 sm:py-16">
+        <div className="loading-spinner h-8 w-8 mb-4" />
+        <p className="text-muted">Loading your files...</p>
+      </div>
+    );
+  }
+
   if (!items.length) {
     return (
-      <div className="text-sm text-gray-500">
-        No media uploaded yet. Use the form above to upload a file.
+      <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+        <div className="mb-4 p-3 rounded-full bg-gray-100">
+          <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No files yet</h3>
+        <p className="text-muted max-w-sm">
+          Upload your first file using the form above to get started with sharing.
+        </p>
       </div>
     );
   }
@@ -68,21 +86,30 @@ export const MediaGallery: React.FC<Props> = ({ items, pagination }) => {
     };
 
     return (
-      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-sm text-gray-700">
-          Showing {startItem} to {endItem} of {totalItems} results
+      <div className="mt-8 space-y-4">
+        {/* Results info */}
+        <div className="text-center sm:text-left">
+          <p className="text-sm text-gray-700">
+            Showing {startItem} to {endItem} of {totalItems} results
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Pagination controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
+          {/* Previous button */}
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary w-full sm:w-auto order-2 sm:order-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
             Previous
           </button>
 
-          <div className="flex items-center gap-1">
+          {/* Page numbers - responsive */}
+          <div className="flex items-center gap-1 order-1 sm:order-2">
             {getPageNumbers().map((page, index) => (
               <button
                 key={index}
@@ -90,12 +117,12 @@ export const MediaGallery: React.FC<Props> = ({ items, pagination }) => {
                   typeof page === "number" ? onPageChange(page) : undefined
                 }
                 disabled={page === "..."}
-                className={`px-3 py-1 text-sm border rounded-md ${
+                className={`min-w-[44px] h-11 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   page === currentPage
-                    ? "bg-blue-600 text-white border-blue-600"
+                    ? "bg-brand-600 text-white shadow-button"
                     : page === "..."
-                    ? "border-transparent cursor-default"
-                    : "border-gray-300 hover:bg-gray-50"
+                    ? "text-gray-400 cursor-default"
+                    : "text-gray-700 hover:bg-gray-100 border border-gray-300"
                 }`}
               >
                 {page}
@@ -103,12 +130,16 @@ export const MediaGallery: React.FC<Props> = ({ items, pagination }) => {
             ))}
           </div>
 
+          {/* Next button */}
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary w-full sm:w-auto order-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
+            <svg className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -116,13 +147,30 @@ export const MediaGallery: React.FC<Props> = ({ items, pagination }) => {
   };
 
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((m) => (
-          <MediaCard key={m.id} media={m} />
-        ))}
+    <>
+      <div className="space-y-6">
+        {/* Grid with responsive layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {items.map((m) => (
+            <MediaCard key={m.id} media={m} />
+          ))}
+        </div>
+        
+        {renderPagination()}
       </div>
-      {renderPagination()}
-    </div>
+      
+      {/* Full-screen loading overlay */}
+      {loading && items.length > 0 && (
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="flex flex-col items-center space-y-4 p-8 bg-white rounded-2xl shadow-card-lg border border-gray-100">
+            <div className="loading-spinner h-8 w-8" />
+            <div className="text-center">
+              <p className="text-lg font-medium text-gray-900 mb-1">Refreshing...</p>
+              <p className="text-sm text-gray-600">Loading your latest files</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
