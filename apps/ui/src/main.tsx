@@ -5,9 +5,13 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
+import { initializeAxeCore } from "./utils/accessibility";
 
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
+
+// Initialize accessibility testing in development
+initializeAxeCore();
 
 const queryClient = new QueryClient();
 
@@ -37,6 +41,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         theme="light"
         toastClassName="!bg-white !text-gray-900 !shadow-lg !border"
         progressClassName="!bg-brand-500"
+        role="region"
+        aria-label="Notification messages"
       />
     </>
   </React.StrictMode>

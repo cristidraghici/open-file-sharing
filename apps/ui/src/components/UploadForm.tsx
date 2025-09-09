@@ -1,8 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useId, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { FileMetadata, uploadMediaMultiple } from "../services/media";
 import { toastService } from "../services/toast";
+import {
+  announceToScreenReader,
+  handleReactKeyboardActivation,
+} from "../utils/accessibility";
 
 interface Props {
   onUploaded?: (meta: FileMetadata) => void;
@@ -15,6 +19,11 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
     total: number;
     done: number;
   }>({ total: 0, done: 0 });
+
+  // Generate unique IDs for accessibility
+  const toggleId = useId();
+  const dropzoneId = useId();
+  const progressId = useId();
 
   const batchUpload = useMutation({
     mutationFn: async (files: File[]) =>
@@ -39,13 +48,14 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
           done: acceptedFiles.length,
         });
 
-        // Show success message
+        // Show success message and announce to screen readers
         const fileCount = acceptedFiles.length;
         const message =
           fileCount === 1
             ? `Successfully uploaded ${acceptedFiles[0].name}`
             : `Successfully uploaded ${fileCount} files`;
         toastService.success(message);
+        announceToScreenReader(message, "assertive");
       } catch (err: any) {
         // Error toast is handled by API interceptor
         console.error("Upload error:", err);
@@ -75,30 +85,33 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
     <div className="space-y-4 sm:space-y-6">
       {/* Folder selection toggle */}
       <div className="flex items-center justify-center sm:justify-start">
-        <label className="inline-flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer touch-target">
-          <div className="relative">
+        <div className="flex items-center gap-3">
+          <div className="toggle-switch">
             <input
+              id={toggleId}
               type="checkbox"
-              className="sr-only"
+              role="switch"
               checked={dirMode}
               onChange={(e) => setDirMode(e.target.checked)}
+              className="sr-only"
+              aria-describedby={`${toggleId}-help`}
+              aria-checked={dirMode}
             />
-            <div
-              className={`w-11 h-6 rounded-full border-2 transition-all duration-200 ${
-                dirMode
-                  ? "bg-brand-600 border-brand-600"
-                  : "bg-gray-200 border-gray-300"
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                  dirMode ? "translate-x-5" : "translate-x-0.5"
-                } mt-0.5`}
-              />
-            </div>
+            <label htmlFor={toggleId} className="toggle-slider" />
           </div>
-          <span>Select entire folders</span>
-        </label>
+          <label
+            htmlFor={toggleId}
+            className="text-sm font-medium text-gray-700 cursor-pointer select-none touch-target"
+          >
+            Select entire folders
+          </label>
+        </div>
+        <div id={`${toggleId}-help`} className="sr-only">
+          Toggle switch for folder selection. 
+          {dirMode
+            ? "Currently enabled: will select entire folders when browsing"
+            : "Currently disabled: will select individual files when browsing"}
+        </div>
       </div>
 
       {/* Upload area */}
@@ -111,12 +124,31 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
         } ${
           isPending ? "opacity-70 cursor-not-allowed" : ""
         } touch-manipulation`}
+        role="button"
         aria-disabled={isPending}
+        aria-describedby={`${dropzoneId}-help`}
+        aria-label={`Upload ${
+          dirMode ? "folders" : "files"
+        }. Drag and drop or click to select.`}
+        tabIndex={isPending ? -1 : 0}
+        onKeyDown={(e) => {
+          if (!isPending) {
+            handleReactKeyboardActivation(e, () => {
+              // Trigger file input click
+              const input = e.currentTarget.querySelector(
+                'input[type="file"]'
+              ) as HTMLInputElement;
+              input?.click();
+            });
+          }
+        }}
       >
         <input
           {...getInputProps()}
           {...inputDirectoryProps}
           disabled={isPending}
+          aria-hidden="true"
+          tabIndex={-1}
         />
 
         {/* Upload icon */}
@@ -124,6 +156,7 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
           className={`mb-4 p-3 rounded-full transition-all duration-200 ${
             isDragActive ? "bg-brand-100" : "bg-white shadow-sm"
           }`}
+          aria-hidden="true"
         >
           <svg
             className={`h-8 w-8 sm:h-10 sm:w-10 transition-colors duration-200 ${
@@ -132,6 +165,7 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -149,7 +183,9 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
               isDragActive ? "text-brand-700" : "text-gray-900"
             }`}
           >
-            {isDragActive ? "Drop your files here" : "Drag and drop files here"}
+            {isDragActive
+              ? `Drop your ${dirMode ? "folders" : "files"} here`
+              : `Drag and drop ${dirMode ? "folders" : "files"} here`}
           </div>
           <div className="text-sm text-gray-500 max-w-sm mx-auto">
             or{" "}
@@ -161,6 +197,15 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
           </div>
         </div>
 
+        {/* Accessibility help text */}
+        <div id={`${dropzoneId}-help`} className="sr-only">
+          Upload area for {dirMode ? "folders" : "files"}.
+          {isDragActive
+            ? "Files are being dragged over the upload area. Release to upload."
+            : "Press Enter or Space to open file browser, or drag and drop files here."}
+          {isPending && " Upload in progress, please wait."}
+        </div>
+
         {/* Animated background effect */}
         {isDragActive && (
           <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 to-brand-600/5 animate-pulse" />
@@ -169,34 +214,58 @@ export const UploadForm: React.FC<Props> = ({ onUploaded }) => {
 
       {/* Progress indicator */}
       {isPending && (
-        <div className="space-y-4 animate-slide-up">
+        <div
+          className="space-y-4 animate-slide-up"
+          role="region"
+          aria-labelledby={`${progressId}-label`}
+          aria-live="polite"
+        >
           {/* Upload status */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <div className="loading-spinner h-4 w-4" />
-              <span className="font-medium text-gray-900">
+              <div className="loading-spinner h-4 w-4" aria-hidden="true" />
+              <span
+                id={`${progressId}-label`}
+                className="font-medium text-gray-900"
+              >
                 Uploading files...
               </span>
             </div>
-            <span className="text-gray-600">
+            <span
+              className="text-gray-600"
+              aria-label={`${uploadingCount.done} of ${uploadingCount.total} files uploaded`}
+            >
               {uploadingCount.done} / {uploadingCount.total}
             </span>
           </div>
 
           {/* Progress bar */}
           <div className="relative">
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div
+              className="w-full bg-gray-200 rounded-full h-3 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-describedby={`${progressId}-description`}
+            >
               <div
                 className="h-3 bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-300 ease-out rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/20 to-transparent" />
+            <div
+              className="absolute inset-0 rounded-full bg-gradient-to-r from-white/20 to-transparent"
+              aria-hidden="true"
+            />
           </div>
 
           {/* Progress percentage */}
           <div className="text-center">
-            <span className="text-xs font-medium text-gray-600">
+            <span
+              id={`${progressId}-description`}
+              className="text-xs font-medium text-gray-600"
+            >
               {Math.round(progress)}% complete
             </span>
           </div>

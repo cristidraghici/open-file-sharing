@@ -1,7 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { deleteMediaById, FileMetadata, mediaUrl } from "../services/media";
 import { toastService } from "../services/toast";
+import {
+  announceToScreenReader,
+  getAccessibleFileSize,
+  getAccessibleFileType,
+} from "../utils/accessibility";
 
 interface Props {
   media: FileMetadata;
@@ -12,6 +17,10 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  // Generate unique IDs for accessibility
+  const cardId = useId();
+  const deleteConfirmId = useId();
 
   const {
     id = "",
@@ -35,13 +44,18 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
     if (!id || isDeleting) return;
 
     setIsDeleting(true);
+    announceToScreenReader(`Deleting ${name}`, "assertive");
+
     try {
       await deleteMediaById(id);
       onDelete?.(id);
       setShowConfirmDelete(false);
-      toastService.success(`Successfully deleted ${name}`);
+      const successMessage = `Successfully deleted ${name}`;
+      toastService.success(successMessage);
+      announceToScreenReader(successMessage, "assertive");
     } catch (error) {
       console.error("Failed to delete file:", error);
+      announceToScreenReader(`Failed to delete ${name}`, "assertive");
       // Error toast is handled by API interceptor
     } finally {
       setIsDeleting(false);
@@ -126,29 +140,51 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
   };
 
   return (
-    <div className="card group hover:shadow-card-hover transition-all duration-200 animate-fade-in">
+    <article
+      className="card group hover:shadow-card-hover transition-all duration-200 animate-fade-in"
+      aria-labelledby={`${cardId}-title`}
+    >
       {/* Image preview for images */}
       {isImage && href && (
         <div className="relative mb-4 -mt-2 -mx-2">
-          <a href={href} target="_blank" rel="noreferrer" className="block">
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="block"
+            aria-label={`Open ${name} image in new tab`}
+          >
             <img
               src={href}
-              alt={name}
+              alt={`Preview of ${name} - ${getAccessibleFileType(
+                fileType
+              )}, ${getAccessibleFileSize(size)}`}
               className="w-full h-48 sm:h-52 object-cover rounded-t-xl transition-transform duration-200 group-hover:scale-[1.02]"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-t-xl" />
+            <div
+              className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-t-xl"
+              aria-hidden="true"
+            />
           </a>
           {isPublic && (
-            <div className="absolute top-3 left-3 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 border border-white/20 shadow-sm">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <div
+              className="absolute top-3 left-3 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 border border-white/20 shadow-sm"
+              aria-label="This file is publicly accessible"
+            >
+              <svg
+                className="h-3 w-3"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z"
                   clipRule="evenodd"
                 />
               </svg>
-              Public
+              <span>Public</span>
             </div>
           )}
         </div>
@@ -157,54 +193,76 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
       {/* File info */}
       <div className="space-y-3">
         {/* Header with icon and name */}
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
+        <header className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5" aria-hidden="true">
             {getFileTypeIcon(fileType)}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 truncate group-hover:text-brand-700 transition-colors">
+            <h3
+              id={`${cardId}-title`}
+              className="font-medium text-gray-900 truncate group-hover:text-brand-700 transition-colors"
+            >
               {name}
             </h3>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+            <div
+              className="flex items-center gap-2 mt-1 text-xs text-gray-500"
+              aria-label={`${getAccessibleFileType(
+                fileType
+              )}, ${getAccessibleFileSize(size)}`}
+            >
               <span className="capitalize">{fileType}</span>
-              <span>·</span>
+              <span aria-hidden="true">·</span>
               <span>{formatFileSize(size)}</span>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Metadata */}
         <div className="space-y-2">
           {id && (
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-600">
+              <span
+                className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-600"
+                aria-label={`File ID: ${id}`}
+              >
                 {id}
               </span>
             </div>
           )}
 
           {uploadedAt && (
-            <div className="text-xs text-gray-500">
+            <div
+              className="text-xs text-gray-500"
+              aria-label={`Uploaded on ${uploadedAt.toLocaleString()}`}
+            >
               {uploadedAt.toLocaleString()}
             </div>
           )}
 
           {!isImage && isPublic && (
-            <div className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <div
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+              aria-label="This file is publicly accessible"
+            >
+              <svg
+                className="h-3 w-3"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z"
                   clipRule="evenodd"
                 />
               </svg>
-              Public
+              <span>Public</span>
             </div>
           )}
         </div>
 
         {/* Action buttons */}
-        <div className="pt-2 border-t border-gray-100">
+        <footer className="pt-2 border-t border-gray-100">
           {/* Open file button */}
           {href && (
             <a
@@ -214,12 +272,14 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
               href={href}
               target="_blank"
               rel="noreferrer"
+              aria-label={`Open ${name} in new tab`}
             >
               <svg
                 className="h-4 w-4 mr-2 transition-transform group-hover/btn:scale-110"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -228,7 +288,7 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                 />
               </svg>
-              Open File
+              <span>Open File</span>
             </a>
           )}
 
@@ -240,12 +300,15 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
                   onClick={() => setShowConfirmDelete(true)}
                   disabled={isDeleting}
                   className="btn bg-red-600 hover:bg-red-700 text-white text-sm touch-target group/btn w-full"
+                  aria-label={`Delete ${name}`}
+                  type="button"
                 >
                   <svg
                     className="h-4 w-4 mr-2"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -254,25 +317,56 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                  Delete File
+                  <span>Delete File</span>
                 </button>
               ) : (
-                <div className="space-y-2">
-                  <p className="text-xs text-red-600 text-center font-medium">
-                    Are you sure? This cannot be undone.
+                <div
+                  className="space-y-2"
+                  role="dialog"
+                  aria-labelledby={deleteConfirmId}
+                  aria-describedby={`${deleteConfirmId}-desc`}
+                >
+                  <p
+                    id={deleteConfirmId}
+                    className="text-xs text-red-600 text-center font-medium"
+                  >
+                    Delete {name}?
                   </p>
-                  <div className="flex gap-2">
+                  <p
+                    id={`${deleteConfirmId}-desc`}
+                    className="text-xs text-red-600 text-center"
+                  >
+                    This action cannot be undone.
+                  </p>
+                  <div
+                    className="flex gap-2"
+                    role="group"
+                    aria-label="Confirm deletion"
+                  >
                     <button
                       onClick={handleDelete}
                       disabled={isDeleting}
                       className="btn bg-red-600 hover:bg-red-700 text-white text-xs touch-target flex-1"
+                      aria-label={`Confirm delete ${name}`}
+                      type="button"
                     >
-                      {isDeleting ? "Deleting..." : "Yes, Delete"}
+                      {isDeleting ? (
+                        <>
+                          <span>Deleting...</span>
+                          <span className="sr-only">
+                            Please wait while the file is being deleted
+                          </span>
+                        </>
+                      ) : (
+                        "Yes, Delete"
+                      )}
                     </button>
                     <button
                       onClick={() => setShowConfirmDelete(false)}
                       disabled={isDeleting}
                       className="btn bg-gray-500 hover:bg-gray-600 text-white text-xs touch-target flex-1"
+                      aria-label="Cancel deletion"
+                      type="button"
                     >
                       Cancel
                     </button>
@@ -281,8 +375,8 @@ export const MediaCard: React.FC<Props> = ({ media, onDelete }) => {
               )}
             </div>
           )}
-        </div>
+        </footer>
       </div>
-    </div>
+    </article>
   );
 };

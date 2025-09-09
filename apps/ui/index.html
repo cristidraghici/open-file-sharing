@@ -1,13 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open File Sharing</title>
-  </head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Secure file sharing platform - Upload, share, and manage your files with ease" />
+  <meta name="keywords" content="file sharing, secure upload, file management, cloud storage" />
+  <meta name="theme-color" content="#4338ca" />
+  <meta name="color-scheme" content="light" />
+
+  <!-- Accessibility meta tags -->
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="Open File Sharing" />
+
+  <!-- Open Graph meta tags for better sharing -->
+  <meta property="og:title" content="Open File Sharing - Secure File Upload and Sharing Platform" />
+  <meta property="og:description"
+    content="Secure file sharing platform - Upload, share, and manage your files with ease" />
+  <meta property="og:type" content="website" />
+
+  <title>Open File Sharing - Secure File Upload and Sharing Platform</title>
+
+  <!-- Preload critical resources for better performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+</head>
+
+<body>
+  <!-- Skip navigation links for better keyboard accessibility -->
+  <div class="sr-only">
+    <a href="#main-content" class="skip-nav">
+      Skip to main content
+    </a>
+    <a href="#navigation" class="skip-nav">
+      Skip to navigation
+    </a>
+  </div>
+
+  <!-- React application root -->
+  <div id="root"></div>
+
+  <!-- Accessibility enhancement script -->
+  <script>
+    // Detect keyboard usage for enhanced focus indicators
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') {
+        document.body.classList.add('keyboard-user');
+      }
+    });
+
+    document.addEventListener('mousedown', function () {
+      document.body.classList.remove('keyboard-user');
+    });
+  </script>
+
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
